@@ -1,0 +1,23 @@
+{
+  "name": "ulf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Program.fs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "dotnet fable watch ./src/Fable --verbose --run npx vite",
+    "build": "dotnet fable ./src/Fable -s --run npx vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.2.6"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "unicode-properties": "^1.4.1"
+  },
+  "type": "module"
+}

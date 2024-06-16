@@ -1,0 +1,282 @@
+%{
+
+open Parser.Syntax
+
+let parse_error s = printfn "%O" s
+exception ParseError of (string * FSharp.Text.Parsing.IParseState)
+%}
+
+// The start token becomes a parser function in the compiled code:
+%start start syntax longIdent contextElm term symbolArgs symbolLongIdent ident
+
+// Regular tokens
+%token <string> IDENT 
+%token UNDER_BAR
+%token LAMBDA 
+%token LPAREN 
+%token RPAREN
+%token DOT
+%token COMMA
+%token OPEN IMPORT
+%token MODULE WHERE PUBLIC 
+%token NEWLINE
+%token SPACE
+%token JEQ
+
+%token STAR
+%token RECT
+%token REFL
+
+%token SEMICOLON
+%token ARROW
+%token DARROW
+%token COLON
+%token EQ
+
+%token BLOCKBEGIN
+%token BLOCKEND
+%token INDENT
+%token OUTDENT
+%token EOF
+
+%type <SynModule> start
+%type <Syntax> syntax
+%type <SynLongIdent> longIdent
+%type <SynSymbolIdent> symbolLongIdent
+%type <ContextElement> contextElm
+%type <SynPreTerm> term
+%type <SynPreTerm list> symbolArgs
+%type <SynIdent> ident
+%%
+
+// These are the rules of the grammar along with the F# code of the 
+// actions executed as rules are reduced.  
+
+start: 
+    | module EOF {$1}
+    | error EOF {raise (ParseError ("startError", parseState))}
+
+
+module:
+    | MODULE longIdentOrUnderBar context WHERE BLOCKBEGIN syntax BLOCKEND {{
+            moduleName = $2
+            context = $3
+            syntax = $6
+            range = parseState.ResultRange
+        }}
+    | MODULE longIdentOrUnderBar context WHERE {{
+        moduleName = $2
+        context = $3
+        syntax = {
+            syntax = []
+        }
+        range = parseState.ResultRange
+    }}
+
+longIdentOrUnderBar:
+    | longIdent {Some $1}
+    | UNDER_BAR {None}
+
+syntax:
+    | {{syntax = []}}
+    // | syntax' SEMICOLON {{
+    //     syntax = $1
+    // }}
+    | syntax' {{
+        syntax = $1
+    }}
+
+syntax': 
+    | syntaxElm SEMICOLON syntax' {{
+            syntaxElement = $1
+            range = parseState.ResultRange
+        }::$3}
+    | syntaxElm {[{
+        syntaxElement = $1
+        range = parseState.ResultRange}]}
+
+
+syntaxElm: 
+    | module {(Module $1)}
+    | open {(Open $1)}
+    | expr {(Expr $1)}
+
+expr:
+    | signature {{
+        expr = $1
+        range = parseState.ResultRange
+    }}
+
+open:
+    | openImport {$1}
+    | OPEN longIdent PUBLIC {{
+        public' = true
+        openIdent = $2
+        range = parseState.ResultRange}}
+    | OPEN longIdent {{
+        public' = false
+        openIdent = $2
+        range = parseState.ResultRange}}
+
+openImport:
+    | OPEN IMPORT longIdent {{
+        public' = false
+        openIdent = $3
+        range = parseState.ResultRange}}
+    | OPEN IMPORT longIdent PUBLIC {{
+        public' = true
+        openIdent = $3
+        range = parseState.ResultRange
+    }}
+
+context:
+    | {{
+        preContext = []
+        range = parseState.ResultRange
+    }}
+    | context' {{
+        preContext = $1
+        range = parseState.ResultRange
+    }}
+    
+context':
+    | contextElm context' {$1::$2}
+    | contextElm {[$1]}
+    // | error {raise (ParseError("context'", parseState))}
+
+contextElm:
+    | LPAREN variableIdent COLON term RPAREN {{
+        variable = $2
+        preTerm = $4
+        range = parseState.ResultRange
+    }}
+    | LPAREN variableIdent COLON error RPAREN {raise (ParseError("contextElm", parseState))}
+
+variableIdent:
+    | longIdent {{
+        variableIdent = $1
+        range = parseState.ResultRange
+    }}
+
+term_:
+    | pi {Pi $1}
+    | abs {Abs $1}
+    | eq {Eq $1}
+    | refl {Refl $1}
+
+term:
+    | term_ {{
+        preTerm = $1
+        range = parseState.ResultRange}}
+    | app {$1}
+//    | error {raise (ParseError ("term", parseState))}
+
+termElement_:
+    | STAR {Star}
+    | RECT {Rect}
+    | longIdent {SymbolOrVariable $1}
+    | longIdent LPAREN RPAREN {Symbol ($1, [])}
+    | longIdent LPAREN term RPAREN {SymbolOrApp ($1, $3)}
+    | longIdent LPAREN symbolArgs RPAREN {Symbol ($1, $3)}
+
+termElement:
+    | termElement_ {{
+        preTerm = $1
+        range = parseState.ResultRange
+    }}
+
+termElementOrParen:
+    | termElement {$1}
+    | LPAREN term RPAREN {$2}
+
+symbolArgs:
+    | term COMMA term {[$1; $3]}
+    | term COMMA symbolArgs {$1::$3}
+
+symbolOrApp:
+    | longIdent termElement {{
+        preTerm = SymbolOrApp ($1, $2)
+        range = parseState.ResultRange}}
+
+app:
+    | symbolOrApp {$1}
+    | app termElementOrParen {{
+        preTerm = 
+            App (None, None, None, 
+                $1
+                , $2)
+        range = parseState.ResultRange}}
+    | termElementOrParen {$1}
+
+
+longIdent: longIdent' {SynLongIdent ($1, [])}
+
+longIdent': 
+    | ident DOT longIdent' {$1::$3}
+    | ident {[$1]}
+
+
+symbolIdent:
+    | ident {{
+        symbolIdent = SynLongIdent ([$1], [])
+        range = parseState.ResultRange
+    }}
+
+symbolLongIdent:
+    | longIdent {{
+        symbolIdent = $1
+        range = parseState.ResultRange}}
+
+
+pi:
+    | LPAREN longIdent COLON term RPAREN ARROW term {
+        ($4, Some $2, $7)
+    } 
+    | termElementOrParen ARROW term {
+        ($1, None, $3)
+    }
+
+abs:
+    | LAMBDA variableIdent ARROW term {
+        (None, $2, $4)
+    }
+    | LAMBDA LPAREN variableIdent COLON term RPAREN ARROW term {
+        (Some $5, $3, $8)
+    }
+
+eq:
+    | term EQ term {
+        ((None, $1, $3))
+    }
+
+refl:
+    | REFL term {$2}
+
+
+
+terms:
+    | {[]}
+    | terms' {$1}
+
+terms':
+    | term terms' {$1::$2}
+    | term {[$1]}
+
+ident:
+    | IDENT {{
+        str = $1
+        range = parseState.ResultRange
+    }}
+symbolIdentOrUnderBar:
+    | UNDER_BAR {None}
+    | symbolIdent {Some $1}
+
+signature:
+    | symbolIdentOrUnderBar COLON context DARROW term {Signature ($1, $3, $5, parseState.ResultRange)}
+    | context DARROW term {Signature (None, $1, $3, parseState.ResultRange)}
+    | symbolIdentOrUnderBar COLON error DARROW term {
+        printfn "%O" $5
+        raise (ParseError ("signature", parseState))
+    }
+// Using F# keywords for nonterminal names is okay.
+end: EOF { 3 }

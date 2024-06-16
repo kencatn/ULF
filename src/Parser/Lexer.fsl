@@ -1,0 +1,65 @@
+{
+
+// Opens methods related to fslex.exe
+open FSharp.Text.Lexing
+
+let newline (lexbuf: LexBuffer<_>) = 
+  lexbuf.EndPos <- lexbuf.StartPos.NextLine
+let lexeme = LexBuffer<_>.LexemeString
+open Parser.Parser
+let keywords =
+    [
+        "_", UNDER_BAR;
+        "\\", LAMBDA;
+        "lambda", LAMBDA;
+        "open", OPEN;
+        "import", IMPORT;
+        "module", MODULE;
+        "where", WHERE;
+        "public", PUBLIC;
+        "refl_", REFL;
+    ] |> Map.ofList
+}
+
+// Regular expressions
+let whitespace = [' ']
+let newline = ('\n' | '\r' '\n')
+let identChar = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' 'λ' '.' '{' '}' ';']
+let identHead = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' 'λ' '.' '{' '}' ';']
+let identTail = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' 'λ' '.' '{' '}' ';']
+let ident = identHead | (identHead identChar* identTail)
+let indent = whiltespace whitespace
+
+rule tokenstream = parse
+// --------------------------
+| "." 		{ Parser.DOT }
+// --------------------------
+// | indent {INDENT}
+| "(" {LPAREN}
+| ")" {RPAREN}
+| "=" {EQ}
+| ":" {COLON}
+| ";" {SEMICOLON}
+| "," {COMMA}
+| "→" {ARROW}
+| "⇒" {DARROW}
+| "=>" {DARROW}
+| "->" {ARROW}
+| "λ" {LAMBDA}
+| "." {DOT}
+| "*" {STAR}
+| "∗" {STAR}
+| "□" {RECT}
+| "{" {BLOCKBEGIN}
+| "}" {BLOCKEND}
+| whitespace	{ tokenstream lexbuf }
+| newline	{ newline lexbuf; tokenstream lexbuf}
+| ident {
+  match keywords.TryFind(lexeme lexbuf) with
+                | Some(token) -> token
+                | None -> IDENT(lexeme lexbuf)
+}
+// --------------------------
+| _    		{ failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) }
+| eof   	{ Parser.EOF }
+

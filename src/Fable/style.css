@@ -1,0 +1,81 @@
+.pointer-events-none {
+    pointer-events: none;
+}
+
+.pointer-events-all {
+    pointer-events: all;
+}
+
+.pointer-events-visibleFill {
+    pointer-events: visibleFill;
+}
+
+.pointer-events-painted {
+    pointer-events: painted;
+}
+
+.hit-area {
+    fill: yellow;
+    fill-opacity: 0.02;
+}
+
+.keyconfig-editor {
+    position: absolute;
+    left: 100px;
+    top: 100px;
+    border: solid 3px black;
+    background-color: aliceblue;
+}
+
+.keyconfig-editor button {
+    opacity: 1.;
+    background-color: rgb(194, 212, 246);
+    border: rgb(194, 212, 246);
+    margin: 1px;
+}
+
+.node-data-editor {
+    position: absolute;
+}
+
+.graph-editor {
+    border: solid 3px black;
+    fill: wheat
+}
+
+.node {
+    /* fill: white; */
+}
+
+.node-data {
+    text-anchor: middle;
+    fill: black;
+}
+
+.node.selected {
+    stroke: aqua;
+    stroke-width: 3;
+}
+
+.edge {
+    stroke: black;
+    fill: black
+}
+
+.user-select-none {
+    user-select: none;
+}
+
+.user-select-all {
+    user-select: all;
+}
+
+.hide li {
+    display: none;
+}
+
+.center-text {
+    text-anchor: middle;
+    text-align: center;
+    dominant-baseline: middle;
+}
