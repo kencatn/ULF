@@ -27,8 +27,8 @@ let str = """module primdtt.foundation where {
         el : (A : Type) ⇒ ∗;
         Id : (A : Type) (a : el(A)) (b : el(A)) ⇒ Type;
         refl : (A : Type) (a : el(A)) ⇒ el(Id(A, a, a));
-        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a))))⇒ el(C b p);
-        _eq: (A : Type) (a : el(A)) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a)))) ⇒ indId(A, a, a, refl(A, a), C, c) = c
+        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el((C a) (refl(A, a))))⇒ el(C b p);
+        _eq: (A : Type) (a : el(A)) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el((C a) (refl(A, a)))) ⇒ indId(A, a, a, refl(A, a), C, c) = c
     }
 """
 type Msg =
