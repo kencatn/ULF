@@ -77,7 +77,7 @@ let view model dispatch =
         | Some r ->
             let rec p t =
                 Html.ul [
-                    Html.span (
+                    Html.pre (
                         t.current 
                         |> fun (x, y) -> 
                             let j = judgementToString x
