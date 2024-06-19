@@ -163,6 +163,8 @@ term_:
     | abs {Abs $1}
     | eq {Eq $1}
     | refl {Refl $1}
+    | longIdent LPAREN RPAREN {Symbol ($1, [])}
+    | longIdent LPAREN symbolArgs RPAREN {Symbol ($1, $3)}
 
 term:
     | term_ {{
@@ -175,9 +177,6 @@ termElement_:
     | STAR {Star}
     | RECT {Rect}
     | longIdent {SymbolOrVariable $1}
-    | longIdent LPAREN RPAREN {Symbol ($1, [])}
-    | longIdent LPAREN term RPAREN {SymbolOrApp ($1, $3)}
-    | longIdent LPAREN symbolArgs RPAREN {Symbol ($1, $3)}
 
 termElement:
     | termElement_ {{
@@ -196,6 +195,9 @@ symbolArgs:
 symbolOrApp:
     | longIdent termElement {{
         preTerm = SymbolOrApp ($1, $2)
+        range = parseState.ResultRange}}
+    | longIdent LPAREN term RPAREN {{
+        preTerm = SymbolOrApp ($1, $3)
         range = parseState.ResultRange}}
 
 app:

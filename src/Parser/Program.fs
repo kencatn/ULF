@@ -97,27 +97,28 @@ try
     let x = Parser.start Lexer.tokenstream lexbuf
     x |> function
     | (a) -> 
-        a |> string
-        |> printfn "%O"
+        // a |> string
+        // |> printfn "%O"
         a.display |> printfn "%O"
         
         let env = Env.empty
         // check env a.syntax.syntax |> printfn "%O"
         let preSig = a.syntax.ulf env
         printfn "----------------"
-        preSig |> ULF.signatureToString |> printfn "%O"
+        // preSig |> ULF.signatureToString |> printfn "%O"
         printfn "----------------"
         Sig (preSig)
         |> checkTypeAll
         |> function
-        | a -> 
+        | Ok _ -> 
             // a |> printfn "%O"
             printfn "ok" 
-
+        | Error e ->
+            printfn "error"
 with
+| Parser.ParseError (err, state) ->
+    printErrors err str state
 | _ -> ()    
-// | Parser.ParseError (err, state) ->
-//     printErrors err str state
 
 // let arg = """a → b → c"""
 
