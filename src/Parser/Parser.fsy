@@ -72,17 +72,18 @@ module:
         }
         range = parseState.ResultRange
     }}
+    | MODULE longIdentOrUnderBar context WHERE BLOCKBEGIN error BLOCKEND {raise (ParseError ("module_syntax", parseState))}
 
 longIdentOrUnderBar:
     | longIdent {Some $1}
     | UNDER_BAR {None}
 
 syntax:
-    | {{syntax = []}}
+    | SEMICOLON {{syntax = []}}
     // | syntax' SEMICOLON {{
     //     syntax = $1
     // }}
-    | syntax' {{
+    | syntax' SEMICOLON {{
         syntax = $1
     }}
 

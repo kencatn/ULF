@@ -39,7 +39,7 @@ let lexbufToSeq lexbuf =
     Seq.unfold (fun lexbuf ->
         try
             (
-                Lexer.tokenstream lexbuf, lexbuf
+                Lexer.start lexbuf, lexbuf
             ) |> Some
         with
         | _ -> None
@@ -53,20 +53,20 @@ let lex text =
 let parse parser str =
     let lexbuf = LexBuffer<char>.FromString str
     try
-        parser Lexer.tokenstream lexbuf
+        parser Lexer.start lexbuf
         |> Ok
     with
     | _ -> Error ("", "")
     // | Parser.ParseError (err, s) -> Error (err, s)
     
-let str = """module primdtt.foundation where {
-        Type : ⇒ □;
-        el : (A : Type) ⇒ ∗;
-        Id : (A : Type) (a : el(A)) (b : el(A)) ⇒ Type;
-        refl : (A : Type) (a : el(A)) ⇒ el(Id(A, a, a));
-        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a))))⇒ el(C b p);
-        _eq: (A : Type) (a : el(A)) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a)))) ⇒ indId(A, a, a, refl(A, a), C, c) = c
-    }
+let str = """module primdtt.foundation where 
+    Type : ⇒ □
+"""
+let indent = """qwsad where
+    a
+    asdf
+    qwsafe where
+        asdf
 """
 // let str = """module a 
 //     where {
@@ -91,10 +91,11 @@ let printErrors err (str: string) (state: FSharp.Text.Parsing.IParseState) =
 
 try 
     let lexed = lex
-    lexed str |> Seq.iter (printf "%O;")
+    let ls = lexed str |> Seq.toList
+    ls |> Seq.iter (printf "%O;")
     printfn ""
     let lexbuf = LexBuffer<char>.FromString str
-    let x = Parser.start Lexer.tokenstream lexbuf
+    let x = Parser.start Lexer.start lexbuf
     x |> function
     | (a) -> 
         // a |> string
