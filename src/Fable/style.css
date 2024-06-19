@@ -79,3 +79,15 @@
     text-align: center;
     dominant-baseline: middle;
 }
+
+body {
+    background-color: #111111;
+    color: #EEEEEE
+}
+.token.module, .token.where, .token.darrow, .token.arrow{
+    color: #7797EE
+}
+
+.token.ident {
+    color: #66EEEE
+}

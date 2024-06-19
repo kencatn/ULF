@@ -13,6 +13,7 @@ open Common.Utils.ReduUndo
 #endif
 
 type Parsed = {
+    tokens: (Parser.token * Position * Position) seq
     synModule: Syntax.SynModule
     typeCheck: Result<NonEmptyTree<((TypelessJudgemnt*string option))>, NonEmptyTree<(TypelessJudgemnt * string option)>>
     typeCheckTree: Result<RedoUndo<(TypelessJudgemnt* string option) >, RedoUndo<(TypelessJudgemnt * string option)>> 
@@ -46,6 +47,17 @@ let update msg model =
             |> function
             | Error _ -> None
             | Ok a ->
+                let lexbuf = LexBuffer.FromString str
+                let tokens = 
+                    Seq.unfold (fun buf -> 
+                        try
+                            let r = Lexer.tokenstream buf
+                            let sp = buf.StartPos
+                            let ep = buf.EndPos
+                            ((r, sp, ep), buf )|> Some
+                        with
+                        | _ -> None
+                    ) lexbuf |> Seq.cache
                 let typeCheckResult =
                     a.syntax.ulf (Syntax.Env.empty)
                     |> Sig
@@ -55,6 +67,7 @@ let update msg model =
                     | Ok j -> j |> RedoUndo.ofNonEmptyTree |> Ok
                     | Error t -> t |> RedoUndo.ofNonEmptyTree |> Error
                 {
+                    tokens = tokens
                     synModule = a
                     typeCheck = typeCheckResult
                     typeCheckTree = t
@@ -71,6 +84,57 @@ let view model dispatch =
         Html.textarea [
             prop.defaultValue model.code
             prop.onChange (ChangeCode>>dispatch)
+        ]
+        match model.parseResult with
+        | None -> ()
+        | Some x ->
+        Html.pre [
+            let mutable p = 0
+            let mutable cn = 0
+            for (token, sp, ep) in x.tokens do
+                let n = sp.Line
+                cn <- n
+                let sp = sp.pos_cnum + n
+                let ep = ep.pos_cnum + n
+                if sp > p then yield Html.span (model.code.[p..sp-1])
+                yield 
+                    Html.span [
+                        let color =
+                            match token with
+                            | Parser.token.MODULE -> "module"
+                            | Parser.token.IDENT str -> "ident"
+                            | Parser.token.WHERE -> "where"
+                            | Parser.token.BLOCKBEGIN -> "blockbegin"
+                            | Parser.token.BLOCKEND -> "blockend"
+                            | Parser.token.RECT -> "rect"
+                            | Parser.token.DARROW -> "darrow"
+                            | Parser.token.COLON -> "colon"
+                            | Parser.token.COMMA -> "comma"
+                            | Parser.token.DOT -> "dot"
+                            | Parser.token.EQ -> "eq"
+                            | Parser.token.IMPORT -> "import"
+                            | Parser.token.JEQ -> "jeq"
+                            | Parser.token.LAMBDA -> "lambda"
+                            | Parser.token.LPAREN -> "lparen"
+                            | Parser.token.RPAREN -> "rparen"
+                            | Parser.token.OPEN -> "open"
+                            | Parser.token.PUBLIC -> "public"
+                            | Parser.token.STAR -> "star"
+                            | Parser.token.SEMICOLON -> "semicolon"
+                            | Parser.token.REFL -> "refl"
+                            | Parser.token.ARROW -> "arrow"
+                            | Parser.token.UNDER_BAR -> "under_bar"
+                            | Parser.token.EOF 
+                            | Parser.token.INDENT 
+                            | Parser.token.NEWLINE
+                            | Parser.token.OUTDENT
+                            | Parser.token.SPACE                                   -> ""
+                        prop.classes ["token"; color]
+                        prop.children [
+                            Html.span (model.code.[sp..ep-1])
+                        ]
+                    ]
+                p <- ep
         ]
         match model.parseResult with
         | None -> ()
