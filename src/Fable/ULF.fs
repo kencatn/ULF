@@ -160,7 +160,7 @@ let view model dispatch =
             match r.typeCheckTree with
             | Ok t ->
                 Html.div [
-                    prop.style [style.color "green"]
+                    prop.classes ["type_check"; "ok"]
                     prop.children [
                         p t
                     ]
@@ -168,7 +168,7 @@ let view model dispatch =
                 
             | Error t -> 
                 Html.div [
-                    prop.style [style.color "red"]
+                    prop.classes ["type_check"; "error"]
                     prop.children [
                         p t
                     ]
