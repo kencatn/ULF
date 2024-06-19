@@ -84,10 +84,18 @@ body {
     background-color: #111111;
     color: #EEEEEE
 }
-.token.module, .token.where, .token.darrow, .token.arrow{
+.token.module, .token.where, .token.darrow, .token.arrow, .token.colon, .token.comma{
     color: #7797EE
 }
-
-.token.ident {
+.token.rect, .token.star {
     color: #66EEEE
+}
+.token.ident {
+    color: #44FF22
+}
+.type_check.ok {
+    color: greenyellow
+}
+.type_check.error {
+    color: #FF4444
 }
