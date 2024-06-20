@@ -10,36 +10,12 @@ open ULF
 
 
 
-// let testLexerAndParserFromString text expectedCount = 
-//     let lexbuf = LexBuffer<char>.FromString text
-
-//     let countFromParser = Parser.start Lexer.tokenstream lexbuf
-
-//     printfn "countFromParser: result = %O, expected %d" countFromParser expectedCount
-
-// let testLexerAndParserFromFile (fileName:string) expectedCount = 
-//     use textReader = new System.IO.StreamReader(fileName)
-//     let lexbuf = LexBuffer<char>.FromTextReader textReader
-
-//     let countFromParser = Parser.start Lexer.tokenstream lexbuf
-
-//     printfn "countFromParser: result = %O, expected %d" countFromParser expectedCount
-
-// testLexerAndParserFromString "hello" 1
-// testLexerAndParserFromString "hello.hello" 2
-
-// let testFile = Path.Combine(__SOURCE_DIRECTORY__, "test.txt")
-// File.WriteAllText(testFile, "hello hello")
-// testLexerAndParserFromFile testFile 2
-
-// printfn "Press any key to continue..."
-// System.Console.ReadLine() |> ignore
 
 let lexbufToSeq lexbuf =
     Seq.unfold (fun lexbuf ->
         try
             (
-                Lexer.tokenstream lexbuf, lexbuf
+                Lexer.start lexbuf, lexbuf
             ) |> Some
         with
         | _ -> None
@@ -53,7 +29,7 @@ let lex text =
 let parse parser str =
     let lexbuf = LexBuffer<char>.FromString str
     try
-        parser Lexer.tokenstream lexbuf
+        parser Lexer.start lexbuf
         |> Ok
     with
     | _ -> Error ("", "")
@@ -94,7 +70,7 @@ try
     lexed str |> Seq.iter (printf "%O;")
     printfn ""
     let lexbuf = LexBuffer<char>.FromString str
-    let x = Parser.start Lexer.tokenstream lexbuf
+    let x = Parser.start Lexer.start lexbuf
     x |> function
     | (a) -> 
         a |> string
@@ -126,7 +102,7 @@ with
 // |> lex
 // |> Seq.iter (printf "%O; ")
 // try
-//     let x = Parser.term Lexer.tokenstream lexbuf
+//     let x = Parser.term Lexer.start lexbuf
 //     printfn ""
 //     lexbuf
 //     |> lexbufToSeq
