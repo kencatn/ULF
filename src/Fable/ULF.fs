@@ -1,6 +1,6 @@
 module ULF
 open Parser
-open Lexing
+open FSharp.Text.Lexing
 open Common.Utils
 open NonEmptyTree
 open Parser.ULF
@@ -21,43 +21,44 @@ type Parsed = {
 type Model =
     {
         code: string
+        tokens: (Parser.token * Position * Position) seq
         parseResult: Parsed option
     }
-let str = """module primdtt.foundation where {
-        Type : ⇒ □;
-        el : (A : Type) ⇒ ∗;
-        Id : (A : Type) (a : el(A)) (b : el(A)) ⇒ Type;
-        refl : (A : Type) (a : el(A)) ⇒ el(Id(A, a, a));
-        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el((C a) (refl(A, a))))⇒ el(C b p);
+let str = """module primdtt.foundation where 
+        Type : ⇒ □
+        el : (A : Type) ⇒ ∗
+        Id : (A : Type) (a : el(A)) (b : el(A)) ⇒ Type
+        refl : (A : Type) (a : el(A)) ⇒ el(Id(A, a, a))
+        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el((C a) (refl(A, a))))⇒ el(C b p)
         _eq: (A : Type) (a : el(A)) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el((C a) (refl(A, a)))) ⇒ indId(A, a, a, refl(A, a), C, c) = c
-    }
 """
 type Msg =
     | ChangeCode of string
 let init () =
     {
         code = ""
+        tokens = Seq.empty
         parseResult = None
     }, Cmd.ofMsg (ChangeCode str)
 let update msg model =
     match msg with
     | ChangeCode str ->
+        let lexbuf = LexBuffer.FromString str
+        let tokens = 
+            Seq.unfold (fun buf -> 
+                try
+                    let r = Lexer.start buf
+                    let sp = buf.StartPos
+                    let ep = buf.EndPos
+                    ((r, sp, ep), buf )|> Some
+                with
+                | _ -> None
+            ) lexbuf |> Seq.cache
         let parseResult =
             Program.parse Parser.start str
             |> function
             | Error _ -> None
             | Ok a ->
-                let lexbuf = LexBuffer.FromString str
-                let tokens = 
-                    Seq.unfold (fun buf -> 
-                        try
-                            let r = Lexer.tokenstream buf
-                            let sp = buf.StartPos
-                            let ep = buf.EndPos
-                            ((r, sp, ep), buf )|> Some
-                        with
-                        | _ -> None
-                    ) lexbuf |> Seq.cache
                 let typeCheckResult =
                     a.syntax.ulf (Syntax.Env.empty)
                     |> Sig
@@ -74,6 +75,7 @@ let update msg model =
                 } |> Some
         {
             code = str
+            tokens = tokens
             parseResult = parseResult
         }, Cmd.none
 
@@ -85,8 +87,12 @@ let view model dispatch =
             prop.defaultValue model.code
             prop.onChange (ChangeCode>>dispatch)
         ]
+        Html.p []
+        Html.text (sprintf "%O" (model.tokens |> Seq.map (fun (a, _, _) -> a |> string) |> String.concat "; "))
         match model.parseResult with
-        | None -> ()
+        | None ->
+            Html.p []   
+            Html.text "parse failed"
         | Some x ->
         Html.pre [
             let mutable p = 0

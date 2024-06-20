@@ -22,6 +22,12 @@ let mutable acceptIndent = false
 let mutable indents: int list = []
 let mutable curerntIndent = 0
 let mutable newlinesymbol = false
+
+let init () =
+      newlinesymbol <- false
+      curerntIndent <- 0
+      indents <- []
+      acceptIndent <- false
 }
 // Regular expressions
 let whitespace = [' ']
@@ -32,8 +38,13 @@ let identTail = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' '�
 let ident = identHead | (identHead identChar* identTail)
 let indent = whiltespace whitespace
 let never = 'a'+'a'
+let anyZero = never?
 rule start = parse
-  | never? {
+  | anyZero {
+      indentSemicolon lexbuf
+    }
+and indentSemicolon = parse
+  | anyZero {
         if newlinesymbol then
           newlinesymbol <- false
           SEMICOLON
@@ -70,7 +81,7 @@ and tokenstream = parse
     acceptIndent <- true
     WHERE}
   | whitespace	{
-    start lexbuf}
+    indentSemicolon lexbuf}
   | newline	whitespace* { 
     newline lexbuf
     let depth = (lexeme lexbuf).Length - 1
@@ -94,7 +105,7 @@ and tokenstream = parse
           let (i, ls) = loop 1 xs
           indents <- ls
           curerntIndent <- i
-          start lexbuf
+          indentSemicolon lexbuf
       | [] ->
         printfn "a"
         indents <- [depth]
@@ -104,12 +115,16 @@ and tokenstream = parse
       let (i, ls) = loop 0 indents
       indents <- ls
       curerntIndent <- i
-      start lexbuf}
+      indentSemicolon lexbuf}
   | ident {
     match keywords.TryFind(lexeme lexbuf) with
                   | Some(token) -> token
                   | None -> IDENT(lexeme lexbuf)
   }
   // --------------------------
-  | _    		{ failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) }
-  | eof   	{ Parser.EOF }
+  | _    		{ 
+      init ()
+      failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) }
+  | eof   	{ 
+      init ()
+      Parser.EOF }

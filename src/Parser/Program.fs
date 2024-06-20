@@ -56,11 +56,14 @@ let parse parser str =
         parser Lexer.start lexbuf
         |> Ok
     with
-    | _ -> Error ("", "")
-    // | Parser.ParseError (err, s) -> Error (err, s)
+    | Parser.ParseError (err, s) -> Error (err, s)
+    | e -> 
+        printfn "%O" e 
+        failwith "eer"
+    
     
 let str = """module primdtt.foundation where 
-    Type : ⇒ □
+        Type : ⇒ □
 """
 let indent = """qwsad where
     a
@@ -140,3 +143,14 @@ with
 // with
 // | Parser.ParseError (a, b) ->
 //     printErrors a arg b
+
+// let syntax = """Type : ⇒ □; el : (A : Type) ⇒ *;"""
+// lex syntax |> Seq.iter (printf "%O; ")
+// printfn ""
+// parse Parser.startSyntax syntax
+// |> function
+// | Ok a -> 
+//     printfn "ok"
+//     printfn "%O" a.display
+// | Error (err, state) -> 
+//     printErrors err syntax state

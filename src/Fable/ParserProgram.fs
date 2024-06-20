@@ -1,7 +1,7 @@
 ﻿module Parser.Program
 
 open System.IO
-open Lexing
+open FSharp.Text.Lexing
 
 
 open Syntax
@@ -77,7 +77,7 @@ let str = """module primdtt.foundation where {
 // let str = "app(abs(b), a)"
 // let str = "app()"
 
-let printErrors err (str: string) (state: Parsing.IParseState) =
+let printErrors err (str: string) (state: FSharp.Text.Parsing.IParseState) =
     let (s, t) = state.ResultRange
     let s = s.pos_cnum + s.pos_lnum
     let t = t.pos_cnum + t.pos_lnum
