@@ -81,6 +81,37 @@ let update msg model =
 
 open Feliz
 
+let tokenToClasses token =
+    match token with
+    | Parser.token.MODULE -> ["module"]
+    | Parser.token.IDENT str -> ["ident"]
+    | Parser.token.WHERE -> ["where"]
+    | Parser.token.BLOCKBEGIN -> ["blockbegin"]
+    | Parser.token.BLOCKEND -> ["blockend"]
+    | Parser.token.RECT -> ["rect"]
+    | Parser.token.DARROW -> ["darrow"]
+    | Parser.token.COLON -> ["colon"]
+    | Parser.token.COMMA -> ["comma"]
+    | Parser.token.DOT -> ["dot"]
+    | Parser.token.EQ -> ["eq"]
+    | Parser.token.IMPORT -> ["import"]
+    | Parser.token.JEQ -> ["jeq"]
+    | Parser.token.LAMBDA -> ["lambda"]
+    | Parser.token.LPAREN -> ["lparen"]
+    | Parser.token.RPAREN -> ["rparen"]
+    | Parser.token.OPEN -> ["open"]
+    | Parser.token.PUBLIC -> ["public"]
+    | Parser.token.STAR -> ["star"]
+    | Parser.token.SEMICOLON -> ["semicolon"]
+    | Parser.token.REFL -> ["refl"]
+    | Parser.token.ARROW -> ["arrow"]
+    | Parser.token.UNDER_BAR -> ["under_bar"]
+    | Parser.token.EOF 
+    | Parser.token.INDENT 
+    | Parser.token.NEWLINE
+    | Parser.token.OUTDENT
+    | Parser.token.SPACE                                   -> []
+
 let view model dispatch =
     Html.div [
         Html.textarea [
@@ -105,37 +136,9 @@ let view model dispatch =
                 if sp > p then yield Html.span (model.code.[p..sp-1])
                 yield 
                     Html.span [
-                        let color =
-                            match token with
-                            | Parser.token.MODULE -> "module"
-                            | Parser.token.IDENT str -> "ident"
-                            | Parser.token.WHERE -> "where"
-                            | Parser.token.BLOCKBEGIN -> "blockbegin"
-                            | Parser.token.BLOCKEND -> "blockend"
-                            | Parser.token.RECT -> "rect"
-                            | Parser.token.DARROW -> "darrow"
-                            | Parser.token.COLON -> "colon"
-                            | Parser.token.COMMA -> "comma"
-                            | Parser.token.DOT -> "dot"
-                            | Parser.token.EQ -> "eq"
-                            | Parser.token.IMPORT -> "import"
-                            | Parser.token.JEQ -> "jeq"
-                            | Parser.token.LAMBDA -> "lambda"
-                            | Parser.token.LPAREN -> "lparen"
-                            | Parser.token.RPAREN -> "rparen"
-                            | Parser.token.OPEN -> "open"
-                            | Parser.token.PUBLIC -> "public"
-                            | Parser.token.STAR -> "star"
-                            | Parser.token.SEMICOLON -> "semicolon"
-                            | Parser.token.REFL -> "refl"
-                            | Parser.token.ARROW -> "arrow"
-                            | Parser.token.UNDER_BAR -> "under_bar"
-                            | Parser.token.EOF 
-                            | Parser.token.INDENT 
-                            | Parser.token.NEWLINE
-                            | Parser.token.OUTDENT
-                            | Parser.token.SPACE                                   -> ""
-                        prop.classes ["token"; color]
+                        prop.classes [
+                            "token"
+                            yield! tokenToClasses token]
                         prop.children [
                             Html.span (model.code.[sp..ep-1])
                         ]
