@@ -7,8 +7,8 @@ exception ParseError of (string * FSharp.Text.Parsing.IParseState)
 %}
 
 // The start token becomes a parser function in the compiled code:
-%start start syntax longIdent contextElm term symbolArgs symbolLongIdent ident
-
+%start start syntax longIdent contextElm term symbolArgs symbolLongIdent ident syntaxElm syntaxElms
+%start startSyntax
 // Regular tokens
 %token <string> IDENT 
 %token UNDER_BAR
@@ -40,7 +40,9 @@ exception ParseError of (string * FSharp.Text.Parsing.IParseState)
 %token EOF
 
 %type <SynModule> start
-%type <Syntax> syntax
+%type <Syntax> syntax startSyntax
+%type <SyntaxElement list> syntaxElms
+%type <SyntaxElement> syntaxElm
 %type <SynLongIdent> longIdent
 %type <SynSymbolIdent> symbolLongIdent
 %type <ContextElement> contextElm
@@ -72,34 +74,41 @@ module:
         }
         range = parseState.ResultRange
     }}
+    | MODULE longIdentOrUnderBar context WHERE BLOCKBEGIN error BLOCKEND {raise (ParseError ("module_syntax", parseState))}
 
 longIdentOrUnderBar:
     | longIdent {Some $1}
     | UNDER_BAR {None}
-
+startSyntax:
+    | syntax EOF {$1}
 syntax:
     | {{syntax = []}}
-    // | syntax' SEMICOLON {{
+    // | syntaxElms SEMICOLON {{
     //     syntax = $1
     // }}
-    | syntax' {{
+    | syntaxElms {{
         syntax = $1
     }}
 
-syntax': 
-    | syntaxElm SEMICOLON syntax' {{
-            syntaxElement = $1
-            range = parseState.ResultRange
-        }::$3}
-    | syntaxElm {[{
-        syntaxElement = $1
-        range = parseState.ResultRange}]}
+syntaxElms: 
+    | syntaxElm SEMICOLON syntaxElms {$1::$3}
+    | syntaxElm SEMICOLON {[$1]}
 
 
 syntaxElm: 
-    | module {(Module $1)}
-    | open {(Open $1)}
-    | expr {(Expr $1)}
+    | module {{
+            syntaxElement = (Module $1)
+            range = parseState.ResultRange
+        }}
+    | open {{
+        syntaxElement = (Open $1)
+        range = parseState.ResultRange}}
+    | expr {{
+        syntaxElement = (Expr $1)
+        range = parseState.ResultRange}}
+    | openImport {{
+        syntaxElement = $1
+        range = parseState.ResultRange}}
 
 expr:
     | signature {{
@@ -108,7 +117,6 @@ expr:
     }}
 
 open:
-    | openImport {$1}
     | OPEN longIdent PUBLIC {{
         public' = true
         openIdent = $2
@@ -119,11 +127,11 @@ open:
         range = parseState.ResultRange}}
 
 openImport:
-    | OPEN IMPORT longIdent {{
+    | OPEN IMPORT longIdent {Open {
         public' = false
         openIdent = $3
         range = parseState.ResultRange}}
-    | OPEN IMPORT longIdent PUBLIC {{
+    | OPEN IMPORT longIdent PUBLIC {Open {
         public' = true
         openIdent = $3
         range = parseState.ResultRange
@@ -150,7 +158,7 @@ contextElm:
         preTerm = $4
         range = parseState.ResultRange
     }}
-    | LPAREN variableIdent COLON error RPAREN {raise (ParseError("contextElm", parseState))}
+    | LPAREN variableIdent COLON error RPAREN {raise (ParseError("contextElm_term", parseState))}
 
 variableIdent:
     | longIdent {{
@@ -163,6 +171,8 @@ term_:
     | abs {Abs $1}
     | eq {Eq $1}
     | refl {Refl $1}
+    | longIdent LPAREN RPAREN {Symbol ($1, [])}
+    | longIdent LPAREN symbolArgs RPAREN {Symbol ($1, $3)}
 
 term:
     | term_ {{
@@ -175,9 +185,6 @@ termElement_:
     | STAR {Star}
     | RECT {Rect}
     | longIdent {SymbolOrVariable $1}
-    | longIdent LPAREN RPAREN {Symbol ($1, [])}
-    | longIdent LPAREN term RPAREN {SymbolOrApp ($1, $3)}
-    | longIdent LPAREN symbolArgs RPAREN {Symbol ($1, $3)}
 
 termElement:
     | termElement_ {{
@@ -196,6 +203,9 @@ symbolArgs:
 symbolOrApp:
     | longIdent termElement {{
         preTerm = SymbolOrApp ($1, $2)
+        range = parseState.ResultRange}}
+    | longIdent LPAREN term RPAREN {{
+        preTerm = SymbolOrApp ($1, $3)
         range = parseState.ResultRange}}
 
 app:
@@ -271,12 +281,18 @@ symbolIdentOrUnderBar:
     | UNDER_BAR {None}
     | symbolIdent {Some $1}
 
+signature_left:
+    | symbolIdentOrUnderBar COLON {$1}
+    | {None}
+
 signature:
-    | symbolIdentOrUnderBar COLON context DARROW term {Signature ($1, $3, $5, parseState.ResultRange)}
-    | context DARROW term {Signature (None, $1, $3, parseState.ResultRange)}
-    | symbolIdentOrUnderBar COLON error DARROW term {
-        printfn "%O" $5
-        raise (ParseError ("signature", parseState))
+    | signature_left context DARROW term {Signature ($1, $2, $4, parseState.ResultRange)}
+    | signature_left error DARROW term {
+        printfn "%O" $4
+        raise (ParseError ("signature_context", parseState))
     }
+    | signature_left context DARROW error {
+        raise (ParseError ("signature_term", parseState))
+    } 
 // Using F# keywords for nonterminal names is okay.
 end: EOF { 3 }

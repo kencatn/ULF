@@ -61,6 +61,7 @@ type tokenId =
     | TOKEN_end_of_input
     | TOKEN_error
 type nonTerminalId = 
+    | NONTERM__startstartSyntax
     | NONTERM__startstart
     | NONTERM__startsyntax
     | NONTERM__startlongIdent
@@ -69,11 +70,14 @@ type nonTerminalId =
     | NONTERM__startsymbolArgs
     | NONTERM__startsymbolLongIdent
     | NONTERM__startident
+    | NONTERM__startsyntaxElm
+    | NONTERM__startsyntaxElms
     | NONTERM_start
     | NONTERM_module
     | NONTERM_longIdentOrUnderBar
+    | NONTERM_startSyntax
     | NONTERM_syntax
-    | NONTERM_syntax'
+    | NONTERM_syntaxElms
     | NONTERM_syntaxElm
     | NONTERM_expr
     | NONTERM_open
@@ -102,6 +106,7 @@ type nonTerminalId =
     | NONTERM_terms'
     | NONTERM_ident
     | NONTERM_symbolIdentOrUnderBar
+    | NONTERM_signature_left
     | NONTERM_signature
     | NONTERM_end
 /// This function maps tokens to integer indexes
@@ -115,6 +120,7 @@ val prodIdxToNonTerminal: int -> nonTerminalId
 
 /// This function gets the name of a token as a string
 val token_to_string: token -> string
+val startSyntax : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (Syntax) 
 val start : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SynModule) 
 val syntax : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (Syntax) 
 val longIdent : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SynLongIdent) 
@@ -123,3 +129,5 @@ val term : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.L
 val symbolArgs : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SynPreTerm list) 
 val symbolLongIdent : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SynSymbolIdent) 
 val ident : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SynIdent) 
+val syntaxElm : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SyntaxElement) 
+val syntaxElms : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (SyntaxElement list) 

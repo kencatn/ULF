@@ -4,13 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Lexing.fs" />
-    <Compile Include="Parsing.fs" />
+    <Compile Include="../Parser/Lexing.fs" />
+    <Compile Include="../Parser/Parsing.fs" />
     <Compile Include="ParserULF.fs" />
     <Compile Include="Syntax.fs" />
-    <Compile Include="Parser.fs" />
-    <Compile Include="Lexer.fs" />
-    <Compile Include="ParserProgram.fs" />
+    <Compile Include="../Parser/Parser.fs" />
+    <Compile Include="../Parser/LexHelper.fs" />
+    <Compile Include="../Parser/Lexer.fs" />
+    <Compile Include="../Parser/Program.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="ULF.fs" />
     <Compile Include="Program.fs" />
@@ -26,7 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.fsproj" />
   </ItemGroup>
-  <ItemGroup>
+  <!-- <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="11.3.0" />
-  </ItemGroup>
+  </ItemGroup> -->
 </Project>

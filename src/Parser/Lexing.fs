@@ -323,65 +323,75 @@ type AsciiTables(trans: uint16[] array, accept: uint16[]) =
 
     static member Create(trans, accept) = AsciiTables(trans, accept)
 
-// [<Sealed>]
-// type UnicodeTables(trans: uint16[] array, accept: uint16[]) = 
-//     let sentinel = 255 * 256 + 255 
-//     let numUnicodeCategories = 30 
-//     let numLowUnicodeChars = 128 
-//     let numSpecificUnicodeChars = (trans.[0].Length - 1 - numLowUnicodeChars - numUnicodeCategories)/2
-    // let lookupUnicodeCharacters (state, inp: char) = 
-    //     let inpAsInt = int inp
-    //     // Is it a fast ASCII character?
-    //     if inpAsInt < numLowUnicodeChars then 
-    //         int trans.[state].[inpAsInt]
-    //     else 
-    //         // Search for a specific unicode character
-    //         let baseForSpecificUnicodeChars = numLowUnicodeChars
-    //         let rec loop i = 
-    //             if i >= numSpecificUnicodeChars then 
-    //                 // OK, if we failed then read the 'others' entry in the alphabet, 
-    //                 // which covers all Unicode characters not covered in other
-    //                 // ways
-    //                 let baseForUnicodeCategories = numLowUnicodeChars+numSpecificUnicodeChars*2
-    //                 let unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(inp)
-    //                 //System.Console.WriteLine("inp = {0}, unicodeCategory = {1}", [| box inp; box unicodeCategory |])
-    //                 int trans.[state].[baseForUnicodeCategories + int32 unicodeCategory]
-    //             else 
-    //                 // This is the specific unicode character
-    //                 let c = char (int trans.[state].[baseForSpecificUnicodeChars+i*2])
-    //                 //System.Console.WriteLine("c = {0}, inp = {1}, i = {2}", [| box c; box inp; box i |])
-    //                 // OK, have we found the entry for a specific unicode character?
-    //                 if c = inp
-    //                 then int trans.[state].[baseForSpecificUnicodeChars+i*2+1]
-    //                 else loop(i+1)
-            
-    //         loop 0
-    // let eofPos    = numLowUnicodeChars + 2*numSpecificUnicodeChars + numUnicodeCategories 
-    
-    // let rec scanUntilSentinel(lexBuffer, state) =
-    //     // Return an endOfScan after consuming the input 
-    //     let a = int accept.[state] 
-    //     if a <> sentinel then 
-    //         onAccept(lexBuffer, a)
-        
-    //     if lexBuffer.BufferScanLength = lexBuffer.BufferMaxScanLength then 
-    //         lexBuffer.DiscardInput()
-    //         lexBuffer.RefillBuffer ()
-    //       // end of file occurs if we couldn't extend the buffer 
-    //         afterRefill (trans, sentinel, lexBuffer, scanUntilSentinel, lexBuffer.EndOfScan, state, eofPos)
-    //     else
-    //         // read a character - end the scan if there are no further transitions 
-    //         let inp = lexBuffer.Buffer.[lexBuffer.BufferScanPos]
-            
-    //         // Find the new state
-    //         let snew = lookupUnicodeCharacters (state, inp)
+open Fable.Core.JsInterop
+open Fable.Core.JS
+open Fable.Core
+[<Import("getCategory", "unicode-properties")>]
+let getCategory charCodeAt: string = jsNative
+[<Emit("$0.charCodeAt()")>]
+let charCodeAt char = jsNative
+let getUnicodeCategory (char: char) = getCategory (charCodeAt char)
 
-    //         if snew = sentinel then 
-    //             lexBuffer.EndOfScan()
-    //         else 
-    //             lexBuffer.BufferScanLength <- lexBuffer.BufferScanLength + 1
-    //             // Printf.printf "state %d --> %d on '%c' (%d)\n" s snew (char inp) inp
-    //             scanUntilSentinel(lexBuffer, snew)
+
+[<Sealed>]
+type UnicodeTables(trans: uint16[] array, accept: uint16[]) = 
+    let sentinel = 255 * 256 + 255 
+    let numUnicodeCategories = 30 
+    let numLowUnicodeChars = 128 
+    let numSpecificUnicodeChars = (trans.[0].Length - 1 - numLowUnicodeChars - numUnicodeCategories)/2
+    let lookupUnicodeCharacters (state, inp: char) = 
+        let inpAsInt = int inp
+        // Is it a fast ASCII character?
+        if inpAsInt < numLowUnicodeChars then 
+            int trans.[state].[inpAsInt]
+        else 
+            // Search for a specific unicode character
+            let baseForSpecificUnicodeChars = numLowUnicodeChars
+            let rec loop i = 
+                if i >= numSpecificUnicodeChars then 
+                    // OK, if we failed then read the 'others' entry in the alphabet, 
+                    // which covers all Unicode characters not covered in other
+                    // ways
+                    let baseForUnicodeCategories = numLowUnicodeChars+numSpecificUnicodeChars*2
+                    let unicodeCategory = getUnicodeCategory (inp)
+                    //System.Console.WriteLine("inp = {0}, unicodeCategory = {1}", [| box inp; box unicodeCategory |])
+                    int trans.[state].[baseForUnicodeCategories + int32 unicodeCategory]
+                else 
+                    // This is the specific unicode character
+                    let c = char (int trans.[state].[baseForSpecificUnicodeChars+i*2])
+                    //System.Console.WriteLine("c = {0}, inp = {1}, i = {2}", [| box c; box inp; box i |])
+                    // OK, have we found the entry for a specific unicode character?
+                    if c = inp
+                    then int trans.[state].[baseForSpecificUnicodeChars+i*2+1]
+                    else loop(i+1)
+            
+            loop 0
+    let eofPos    = numLowUnicodeChars + 2*numSpecificUnicodeChars + numUnicodeCategories 
+    
+    let rec scanUntilSentinel(lexBuffer, state) =
+        // Return an endOfScan after consuming the input 
+        let a = int accept.[state] 
+        if a <> sentinel then 
+            onAccept(lexBuffer, a)
+        
+        if lexBuffer.BufferScanLength = lexBuffer.BufferMaxScanLength then 
+            lexBuffer.DiscardInput()
+            lexBuffer.RefillBuffer ()
+          // end of file occurs if we couldn't extend the buffer 
+            afterRefill (trans, sentinel, lexBuffer, scanUntilSentinel, lexBuffer.EndOfScan, state, eofPos)
+        else
+            // read a character - end the scan if there are no further transitions 
+            let inp = lexBuffer.Buffer.[lexBuffer.BufferScanPos]
+            
+            // Find the new state
+            let snew = lookupUnicodeCharacters (state, inp)
+
+            if snew = sentinel then 
+                lexBuffer.EndOfScan()
+            else 
+                lexBuffer.BufferScanLength <- lexBuffer.BufferScanLength + 1
+                // Printf.printf "state %d --> %d on '%c' (%d)\n" s snew (char inp) inp
+                scanUntilSentinel(lexBuffer, snew)
                       
     // Each row for the Unicode table has format 
     //      128 entries for ASCII characters
@@ -389,9 +399,9 @@ type AsciiTables(trans: uint16[] array, accept: uint16[]) =
     //      30 entries, one for each UnicodeCategory
     //      1 entry for EOF
 
-    // member tables.Interpret(initialState, lexBuffer : LexBuffer<char>) = 
-    //     startInterpret(lexBuffer)
-    //     scanUntilSentinel(lexBuffer, initialState)
+    member tables.Interpret(initialState, lexBuffer : LexBuffer<char>) = 
+        startInterpret(lexBuffer)
+        scanUntilSentinel(lexBuffer, initialState)
 
     // member tables.AsyncInterpret(initialState, lexBuffer : LexBuffer<char>) = 
 
@@ -425,4 +435,4 @@ type AsciiTables(trans: uint16[] array, accept: uint16[]) =
         // startInterpret(lexBuffer)
         // scanUntilSentinel(lexBuffer, initialState)
 
-    // static member Create(trans, accept) = UnicodeTables(trans, accept)
+    static member Create(trans, accept) = UnicodeTables(trans, accept)

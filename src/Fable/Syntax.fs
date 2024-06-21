@@ -1,7 +1,7 @@
 module rec Parser.Syntax
 
-open Lexing
-open Parsing
+open FSharp.Text.Lexing
+open FSharp.Text.Parsing
 // open FSharp.Text.Parsing.ParseHelpers
 open Parser.ULF
 

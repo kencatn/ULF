@@ -1,4 +1,4 @@
-﻿module Parser.Program
+module Parser.Program
 
 open System.IO
 open FSharp.Text.Lexing
@@ -10,36 +10,28 @@ open ULF
 type A = Range
 
 
-// let testLexerAndParserFromString text expectedCount = 
-//     let lexbuf = LexBuffer<char>.FromString text
+let lexfwithPos () = 
+    let mutable state = {
+        LexHelper.indents = []
+        LexHelper.LexState.eof = false
+        LexHelper.LexState.acceptIndent = false
+        LexHelper.LexState.tokens = []
+    }
+    fun lexbuf ->
+        let loop lexbuf =
+            let token, s = Lexer.start state lexbuf
+            state <- s
+            token
+        loop lexbuf
 
-//     let countFromParser = Parser.start Lexer.tokenstream lexbuf
-
-//     printfn "countFromParser: result = %O, expected %d" countFromParser expectedCount
-
-// let testLexerAndParserFromFile (fileName:string) expectedCount = 
-//     use textReader = new System.IO.StreamReader(fileName)
-//     let lexbuf = LexBuffer<char>.FromTextReader textReader
-
-//     let countFromParser = Parser.start Lexer.tokenstream lexbuf
-
-//     printfn "countFromParser: result = %O, expected %d" countFromParser expectedCount
-
-// testLexerAndParserFromString "hello" 1
-// testLexerAndParserFromString "hello.hello" 2
-
-// let testFile = Path.Combine(__SOURCE_DIRECTORY__, "test.txt")
-// File.WriteAllText(testFile, "hello hello")
-// testLexerAndParserFromFile testFile 2
-
-// printfn "Press any key to continue..."
-// System.Console.ReadLine() |> ignore
+let lexf () = lexfwithPos() >> fst
 
 let lexbufToSeq lexbuf =
+    let lex = lexf ()
     Seq.unfold (fun lexbuf ->
         try
             (
-                Lexer.tokenstream lexbuf, lexbuf
+                lex lexbuf, lexbuf
             ) |> Some
         with
         | _ -> None
@@ -52,21 +44,25 @@ let lex text =
 
 let parse parser str =
     let lexbuf = LexBuffer<char>.FromString str
+    let lexf = lexf()
     try
-        parser Lexer.tokenstream lexbuf
+        parser lexf lexbuf
         |> Ok
     with
-    | _ -> Error ("", "")
-    // | Parser.ParseError (err, s) -> Error (err, s)
+    | Parser.ParseError (err, s) -> Error (err, s)
+    | e -> 
+        printfn "%O" e 
+        failwith "eer"
     
-let str = """module primdtt.foundation where {
-        Type : ⇒ □;
-        el : (A : Type) ⇒ ∗;
-        Id : (A : Type) (a : el(A)) (b : el(A)) ⇒ Type;
-        refl : (A : Type) (a : el(A)) ⇒ el(Id(A, a, a));
-        indId : (A : Type) (a : el(A)) (b : el(A)) (p : el(Id(A, a, b))) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a))))⇒ el(C b p);
-        _eq: (A : Type) (a : el(A)) (C : (x : el(A)) → (y : el(Id(A, a, x))) → Type) (c : el(C a (refl(A, a)))) ⇒ indId(A, a, a, refl(A, a), C, c) = c
-    }
+    
+let str = """module primdtt.foundation where 
+        Type : ⇒ □
+"""
+let indent = """qwsad where
+    a
+    asdf
+    qwsafe where
+        asdf
 """
 // let str = """module a 
 //     where {
@@ -76,7 +72,6 @@ let str = """module primdtt.foundation where {
 // let str = """(x : el A) → el (B x)"""
 // let str = "app(abs(b), a)"
 // let str = "app()"
-
 let printErrors err (str: string) (state: FSharp.Text.Parsing.IParseState) =
     let (s, t) = state.ResultRange
     let s = s.pos_cnum + s.pos_lnum
@@ -91,50 +86,45 @@ let printErrors err (str: string) (state: FSharp.Text.Parsing.IParseState) =
 
 try 
     let lexed = lex
-    lexed str |> Seq.iter (printf "%O;")
+    let ls = lexed str |> Seq.toList
+    ls |> Seq.iter (printf "%O;")
     printfn ""
     let lexbuf = LexBuffer<char>.FromString str
-    let x = Parser.start Lexer.tokenstream lexbuf
+    let lexf = lexf()
+    let x = Parser.start lexf lexbuf
     x |> function
     | (a) -> 
-        a |> string
-        |> printfn "%O"
+        // a |> string
+        // |> printfn "%O"
         a.display |> printfn "%O"
         
         let env = Env.empty
         // check env a.syntax.syntax |> printfn "%O"
         let preSig = a.syntax.ulf env
         printfn "----------------"
-        preSig |> ULF.signatureToString |> printfn "%O"
+        // preSig |> ULF.signatureToString |> printfn "%O"
         printfn "----------------"
         Sig (preSig)
         |> checkTypeAll
         |> function
-        | a -> 
+        | Ok _ -> 
             // a |> printfn "%O"
             printfn "ok" 
-
+        | Error e ->
+            printfn "error"
 with
+| Parser.ParseError (err, state) ->
+    printErrors err str state
 | _ -> ()    
-// | Parser.ParseError (err, state) ->
-//     printErrors err str state
 
-// let arg = """a → b → c"""
 
-// let lexbuf = LexBuffer<char>.FromString arg
-// arg
-// |> lex
-// |> Seq.iter (printf "%O; ")
-// try
-//     let x = Parser.term Lexer.tokenstream lexbuf
-//     printfn ""
-//     lexbuf
-//     |> lexbufToSeq
-//     |> Seq.iter (printf "%O; ")
-//     printfn ""
-//     printfn "%O" (x.ulf Env.empty)
-//     x.display
-//     |> printfn "%O"
-// with
-// | Parser.ParseError (a, b) ->
-//     printErrors a arg b
+// let syntax = """Type : ⇒ □; el : (A : Type) ⇒ *;"""
+// lex syntax |> Seq.iter (printf "%O; ")
+// printfn ""
+// parse Parser.startSyntax syntax
+// |> function
+// | Ok a -> 
+//     printfn "ok"
+//     printfn "%O" a.display
+// | Error (err, state) -> 
+//     printErrors err syntax state
