@@ -13,6 +13,7 @@ type Page =
     | ULFPage
 type Msg =
     | ULFMsg of ULF.Msg
+    | Err of exn
 type Model = {
     ulf: ULF.Model
     currentPage: Page
@@ -26,13 +27,18 @@ let init () =
     }, Cmd.batch [ulfCmd |> Cmd.map ULFMsg]
 
 let update msg model =
-    match msg with
-    | ULFMsg msg ->
-        let um, uc = ULF.update msg model
-        {model with
-            ulf = um
-        }, uc |> Cmd.map ULFMsg
-     
+    try
+        match msg with
+        | ULFMsg msg ->
+            let um, uc = ULF.update msg model
+            {model with
+                ulf = um
+            }, uc |> Cmd.map ULFMsg
+        | Err exn ->
+            printfn "%O" exn
+            model, Cmd.none
+    with
+    | err -> model, Cmd.ofMsg (Err err)
 let view model dispatch =
     match model.currentPage with
     | ULFPage ->
