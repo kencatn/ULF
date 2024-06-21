@@ -6,8 +6,9 @@ module Parser.Lexer
 // Opens methods related to fslex.exe
 open FSharp.Text.Lexing
 
-let newline (lexbuf: LexBuffer<_>) = 
-  lexbuf.EndPos <- lexbuf.StartPos.NextLine
+let newline (lexbuf: LexBuffer<_>) =
+  printfn "newline: \n%O" lexbuf
+  lexbuf.EndPos <- lexbuf.EndPos.NextLine
 let lexeme = LexBuffer<_>.LexemeString
 open Parser.Parser
 open Parser.LexHelper
@@ -291,8 +292,8 @@ and tokenstream state lexbuf =
 
                           
                    match keywords.TryFind(lexeme lexbuf) with
-                                 | Some(token) -> Lex.token token state lexbuf
-                                 | None -> Lex.token (IDENT(lexeme lexbuf)) state lexbuf
+                   | Some(token) -> Lex.token token state lexbuf
+                   | None -> Lex.token (IDENT(lexeme lexbuf)) state lexbuf
                  
 
           )

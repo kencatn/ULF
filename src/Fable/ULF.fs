@@ -130,8 +130,8 @@ let view model dispatch =
             for (token, sp, ep) in x.tokens do
                 let n = sp.Line
                 cn <- n
-                let sp = sp.pos_cnum + n
-                let ep = ep.pos_cnum + n
+                let sp = sp.pos_cnum 
+                let ep = ep.pos_cnum 
                 match token with
                 | Parser.token.IDENT str -> printfn "(%O)" (str, sp, ep, n)
                 | _ -> ()
@@ -146,6 +146,7 @@ let view model dispatch =
                     Html.span [
                         prop.classes [
                             "token"
+                            sprintf "%O" (token, sp, ep)
                             yield! tokenToClasses token]
                         prop.children [
                             Html.span (model.code.[sp..ep-1])
