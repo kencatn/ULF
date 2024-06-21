@@ -24,7 +24,7 @@ let lexfwithPos () =
             token
         loop lexbuf
 
-let lexf () = lexfwithPos() >> fst
+let lexf () = lexfwithPos() >> fst >> fun x -> printfn "%O" x; x
 
 let lexbufToSeq lexbuf =
     let lex = lexf ()

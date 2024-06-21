@@ -4,7 +4,6 @@
 open FSharp.Text.Lexing
 
 let newline (lexbuf: LexBuffer<_>) =
-  printfn "newline: \n%O" lexbuf
   lexbuf.EndPos <- lexbuf.EndPos.NextLine
 let lexeme = LexBuffer<_>.LexemeString
 open Parser.Parser
@@ -28,9 +27,9 @@ let identChar = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' '�
 let identHead = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' 'λ' '.' '{' '}' ';']
 let identTail = [^'\n' '\r' '\n' ' ' '\t' '.' '(' ')' '=' ':' ',' '⇒' '→' 'λ' '.' '{' '}' ';']
 let ident = identHead | (identHead identChar* identTail)
-let indent = whiltespace whitespace
 let never = 'a'+'a'
 let anyZero = never?
+let newlineWhitespaces = newline whitespace*
 rule start (state : LexState) = parse
   | anyZero {
       match state.tokens with
@@ -71,9 +70,11 @@ and tokenstream state = parse
     } lexbuf}
   | whitespace	{
     start state lexbuf} 
-  | newline	whitespace* { 
-    newline lexbuf
-    let depth = (lexeme lexbuf).Length - 1
+  | newlineWhitespaces* newline	whitespace* { 
+    let ls = (lexeme lexbuf).Split("\n")
+    for _ in ls do
+      newline lexbuf
+    let depth = ls.[ls.Length-1].Length
     let rec loop i indents =
       match indents with
       | [] -> i, []
@@ -133,12 +134,13 @@ and tokenstream state = parse
   // --------------------------
   | _    		{ 
       failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) }
-  | eof   	{ 
+  | newlineWhitespaces* eof   	{ 
     start
       {
         state with
           eof = true
           tokens = [
+            SEMICOLON, (lexbuf.EndPos, lexbuf.EndPos)
             for _ in state.indents do
               BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
             EOF, (lexbuf.EndPos, lexbuf.EndPos)
