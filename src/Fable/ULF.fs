@@ -110,7 +110,7 @@ let tokenToClasses token =
     | Parser.token.INDENT 
     | Parser.token.NEWLINE
     | Parser.token.OUTDENT
-    | Parser.token.SPACE                                   -> []
+    | Parser.token.SPACE -> []
 
 let view model dispatch =
     Html.div [
