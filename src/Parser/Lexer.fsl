@@ -43,30 +43,30 @@ rule start (state : LexState) = parse
     }
 and tokenstream state = parse
   // --------------------------
-  | "." {Lex.token Parser.DOT state}
+  | "." {Lex.token Parser.DOT state lexbuf}
   // --------------------------
-  | "(" {Lex.token LPAREN state}
-  | ")" {Lex.token RPAREN state}
-  | "=" {Lex.token EQ state}
-  | ":" {Lex.token COLON state}
-  | ";" {Lex.token SEMICOLON state}
-  | "," {Lex.token COMMA state}
-  | "→" {Lex.token ARROW state}
-  | "⇒" {Lex.token DARROW state}
-  | "=>" {Lex.token DARROW state}
-  | "->" {Lex.token ARROW state}
-  | "λ" {Lex.token LAMBDA state}
-  | "." {Lex.token DOT state}
-  | "*" {Lex.token STAR state}
-  | "∗" {Lex.token STAR state}
-  | "□" {Lex.token RECT state}
-  | "{" {Lex.token BLOCKBEGIN state}
-  | "}" {Lex.token BLOCKEND state}
+  | "(" {Lex.token LPAREN state lexbuf}
+  | ")" {Lex.token RPAREN state lexbuf}
+  | "=" {Lex.token EQ state lexbuf}
+  | ":" {Lex.token COLON state lexbuf}
+  | ";" {Lex.token SEMICOLON state lexbuf}
+  | "," {Lex.token COMMA state lexbuf}
+  | "→" {Lex.token ARROW state lexbuf}
+  | "⇒" {Lex.token DARROW state lexbuf}
+  | "=>" {Lex.token DARROW state lexbuf}
+  | "->" {Lex.token ARROW state lexbuf}
+  | "λ" {Lex.token LAMBDA state lexbuf}
+  | "." {Lex.token DOT state lexbuf}
+  | "*" {Lex.token STAR state lexbuf}
+  | "∗" {Lex.token STAR state lexbuf}
+  | "□" {Lex.token RECT state lexbuf}
+  | "{" {Lex.token BLOCKBEGIN state lexbuf}
+  | "}" {Lex.token BLOCKEND state lexbuf}
   | "where" {
     start {
       state with
         acceptIndent = true
-        tokens = [WHERE]
+        tokens = [WHERE, (lexbuf.StartPos, lexbuf.EndPos)]
     } lexbuf}
   | whitespace	{
     start state lexbuf} 
@@ -92,7 +92,7 @@ and tokenstream state = parse
           start 
             {state with
               indents = depth::state.indents
-              tokens = [BLOCKBEGIN]
+              tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
             } 
             lexbuf
         else
@@ -101,14 +101,14 @@ and tokenstream state = parse
             {
               state with  
                 indents = ls
-                tokens = List.replicate i BLOCKEND
+                tokens = List.replicate i (BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos))
             } 
             lexbuf 
       | [] ->
         start 
           {state with
             indents = [depth]
-            tokens = [BLOCKBEGIN]
+            tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
           } 
           lexbuf
     else
@@ -118,16 +118,16 @@ and tokenstream state = parse
           indents = ls
           tokens = 
             [
-              SEMICOLON
+              SEMICOLON, (lexbuf.EndPos, lexbuf.EndPos)
               for _ in 1..i do
-                BLOCKEND
+                BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
             ]
         } 
         lexbuf }
   | ident {
     match keywords.TryFind(lexeme lexbuf) with
-                  | Some(token) -> Lex.token token state
-                  | None -> Lex.token (IDENT(lexeme lexbuf)) state
+                  | Some(token) -> Lex.token token state lexbuf
+                  | None -> Lex.token (IDENT(lexeme lexbuf)) state lexbuf
   }
   // --------------------------
   | _    		{ 
@@ -139,8 +139,8 @@ and tokenstream state = parse
           eof = true
           tokens = [
             for _ in state.indents do
-              BLOCKEND
-            EOF
+              BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
+            EOF, (lexbuf.EndPos, lexbuf.EndPos)
           ]}
       lexbuf
   }

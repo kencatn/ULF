@@ -10,6 +10,7 @@ let newline (lexbuf: LexBuffer<_>) =
   lexbuf.EndPos <- lexbuf.StartPos.NextLine
 let lexeme = LexBuffer<_>.LexemeString
 open Parser.Parser
+open Parser.LexHelper
 let keywords =
     [
         "_", UNDER_BAR;
@@ -21,16 +22,6 @@ let keywords =
         "public", PUBLIC;
         "refl_", REFL;
     ] |> Map.ofList
-let mutable acceptIndent = false
-let mutable indents: int list = []
-let mutable curerntIndent = 0
-let mutable newlinesymbol = false
-
-let init () =
-      newlinesymbol <- false
-      curerntIndent <- 0
-      indents <- []
-      acceptIndent <- false
 
 
 let trans : uint16[] array = 
@@ -107,151 +98,135 @@ let trans : uint16[] array =
      [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;35us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
     (* State 35 *)
      [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;35us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 36 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;37us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 37 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;38us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 38 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;38us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
     |] 
-let actions : uint16[] = [|65535us;0us;1us;2us;3us;4us;5us;6us;7us;8us;21us;11us;13us;14us;15us;16us;17us;21us;19us;20us;20us;21us;22us;23us;21us;20us;20us;21us;21us;21us;18us;10us;9us;0us;65535us;0us;0us;65535us;0us;|]
+let actions : uint16[] = [|65535us;0us;1us;2us;3us;4us;5us;6us;7us;8us;21us;11us;13us;14us;15us;16us;17us;21us;19us;20us;20us;21us;22us;23us;21us;20us;20us;21us;21us;21us;18us;10us;9us;0us;65535us;0us;|]
 let _fslex_tables = FSharp.Text.Lexing.UnicodeTables.Create(trans,actions)
 let rec _fslex_dummy () = _fslex_dummy() 
 // Rule start
-and start  lexbuf =
-  match _fslex_tables.Interpret(36,lexbuf) with
-  | 0 -> ( 
-
-                            
-                     indentSemicolon lexbuf
-                   
-
-          )
-  | _ -> failwith "start"
-// Rule indentSemicolon
-and indentSemicolon  lexbuf =
+and start (state: LexState) lexbuf =
   match _fslex_tables.Interpret(33,lexbuf) with
   | 0 -> ( 
 
                             
-                       if newlinesymbol then
-                         newlinesymbol <- false
-                         SEMICOLON
+                     match state.tokens with
+                     | [] -> 
+                       if state.eof then
+                         failwith "eof"
                        else
-                       match curerntIndent with
-                       | 0 -> 
-                         tokenstream lexbuf 
-                       | n ->
-                         curerntIndent <- curerntIndent - 1
-                         BLOCKEND
+                         tokenstream state lexbuf
+                     | x::xs ->
+                       x, {state with tokens = xs}
                    
 
           )
-  | _ -> failwith "indentSemicolon"
+  | _ -> failwith "start"
 // Rule tokenstream
-and tokenstream  lexbuf =
+and tokenstream state lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
 
-                        Parser.DOT
+                        Lex.token Parser.DOT state lexbuf
 
           )
   | 1 -> ( 
 
-                        LPAREN
+                        Lex.token LPAREN state lexbuf
 
           )
   | 2 -> ( 
 
-                        RPAREN
+                        Lex.token RPAREN state lexbuf
 
           )
   | 3 -> ( 
 
-                        EQ
+                        Lex.token EQ state lexbuf
 
           )
   | 4 -> ( 
 
-                        COLON
+                        Lex.token COLON state lexbuf
 
           )
   | 5 -> ( 
 
-                        SEMICOLON
+                        Lex.token SEMICOLON state lexbuf
 
           )
   | 6 -> ( 
 
-                        COMMA
+                        Lex.token COMMA state lexbuf
 
           )
   | 7 -> ( 
 
-                        ARROW
+                        Lex.token ARROW state lexbuf
 
           )
   | 8 -> ( 
 
-                        DARROW
+                        Lex.token DARROW state lexbuf
 
           )
   | 9 -> ( 
 
-                         DARROW
+                         Lex.token DARROW state lexbuf
 
           )
   | 10 -> ( 
 
-                         ARROW
+                         Lex.token ARROW state lexbuf
 
           )
   | 11 -> ( 
 
-                        LAMBDA
+                        Lex.token LAMBDA state lexbuf
 
           )
   | 12 -> ( 
 
-                        DOT
+                        Lex.token DOT state lexbuf
 
           )
   | 13 -> ( 
 
-                        STAR
+                        Lex.token STAR state lexbuf
 
           )
   | 14 -> ( 
 
-                        STAR
+                        Lex.token STAR state lexbuf
 
           )
   | 15 -> ( 
 
-                        RECT
+                        Lex.token RECT state lexbuf
 
           )
   | 16 -> ( 
 
-                        BLOCKBEGIN
+                        Lex.token BLOCKBEGIN state lexbuf
 
           )
   | 17 -> ( 
 
-                        BLOCKEND
+                        Lex.token BLOCKEND state lexbuf
 
           )
   | 18 -> ( 
 
                             
-                   acceptIndent <- true
-                   WHERE
+                   start {
+                     state with
+                       acceptIndent = true
+                       tokens = [WHERE, (lexbuf.StartPos, lexbuf.EndPos)]
+                   } lexbuf
 
           )
   | 19 -> ( 
 
                                
-                   indentSemicolon lexbuf
+                   start state lexbuf
 
           )
   | 20 -> ( 
@@ -267,52 +242,80 @@ and tokenstream  lexbuf =
                          loop (i+1) xs
                        else
                          i, indents
-                   if acceptIndent then
-                     acceptIndent <- false
-                     printfn "%O" (depth, indents, curerntIndent)
-                     match indents with
+                   if state.acceptIndent then
+                     let state = {
+                       state with
+                         acceptIndent = false
+                     }
+                     match state.indents with
                      | x::xs ->
                        if depth > x then
-                         indents <- depth :: indents
-                         BLOCKBEGIN
+                         start 
+                           {state with
+                             indents = depth::state.indents
+                             tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
+                           } 
+                           lexbuf
                        else
                          let (i, ls) = loop 1 xs
-                         indents <- ls
-                         curerntIndent <- i
-                         indentSemicolon lexbuf
+                         start 
+                           {
+                             state with  
+                               indents = ls
+                               tokens = List.replicate i (BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos))
+                           } 
+                           lexbuf 
                      | [] ->
-                       printfn "a"
-                       indents <- [depth]
-                       BLOCKBEGIN
+                       start 
+                         {state with
+                           indents = [depth]
+                           tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
+                         } 
+                         lexbuf
                    else
-                     newlinesymbol <- true
-                     let (i, ls) = loop 0 indents
-                     indents <- ls
-                     curerntIndent <- i
-                     indentSemicolon lexbuf
+                     let (i, ls) = loop 0 state.indents
+                     start 
+                       {state with
+                         indents = ls
+                         tokens = 
+                           [
+                             SEMICOLON, (lexbuf.EndPos, lexbuf.EndPos)
+                             for _ in 1..i do
+                               BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
+                           ]
+                       } 
+                       lexbuf 
 
           )
   | 21 -> ( 
 
                           
                    match keywords.TryFind(lexeme lexbuf) with
-                                 | Some(token) -> token
-                                 | None -> IDENT(lexeme lexbuf)
+                                 | Some(token) -> Lex.token token state lexbuf
+                                 | None -> Lex.token (IDENT(lexeme lexbuf)) state lexbuf
                  
 
           )
   | 22 -> ( 
 
                             
-                     init ()
                      failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) 
 
           )
   | 23 -> ( 
 
                             
-                     init ()
-                     Parser.EOF 
+                   start
+                     {
+                       state with
+                         eof = true
+                         tokens = [
+                           for _ in state.indents do
+                             BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
+                           EOF, (lexbuf.EndPos, lexbuf.EndPos)
+                         ]}
+                     lexbuf
+                 
 
           )
   | _ -> failwith "tokenstream"

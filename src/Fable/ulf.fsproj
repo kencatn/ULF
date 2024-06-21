@@ -9,8 +9,9 @@
     <Compile Include="ParserULF.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="Parser.fs" />
+    <Compile Include="../Parser/LexHelper.fs" />
     <Compile Include="Lexer.fs" />
-    <Compile Include="ParserProgram.fs" />
+    <Compile Include="../Parser/Program.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="ULF.fs" />
     <Compile Include="Program.fs" />

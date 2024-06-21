@@ -1,6 +1,6 @@
 module Parser.Lexer
 
-# 1 "Lexer.fsl"
+
  
 
 // Opens methods related to fslex.exe
@@ -23,7 +23,7 @@ let keywords =
         "refl_", REFL;
     ] |> Map.ofList
 
-# 26 "Lexer.fs"
+
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -106,7 +106,7 @@ let rec _fslex_dummy () = _fslex_dummy()
 and start (state: LexState) lexbuf =
   match _fslex_tables.Interpret(33,lexbuf) with
   | 0 -> ( 
-# 34 "Lexer.fsl"
+
                             
                      match state.tokens with
                      | [] -> 
@@ -117,120 +117,120 @@ and start (state: LexState) lexbuf =
                      | x::xs ->
                        x, {state with tokens = xs}
                    
-# 120 "Lexer.fs"
+
           )
   | _ -> failwith "start"
 // Rule tokenstream
 and tokenstream state lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 46 "Lexer.fsl"
-                        Lex.token Parser.DOT state
-# 129 "Lexer.fs"
+
+                        Lex.token Parser.DOT state lexbuf
+
           )
   | 1 -> ( 
-# 48 "Lexer.fsl"
-                        Lex.token LPAREN state
-# 134 "Lexer.fs"
+
+                        Lex.token LPAREN state lexbuf
+
           )
   | 2 -> ( 
-# 49 "Lexer.fsl"
-                        Lex.token RPAREN state
-# 139 "Lexer.fs"
+
+                        Lex.token RPAREN state lexbuf
+
           )
   | 3 -> ( 
-# 50 "Lexer.fsl"
-                        Lex.token EQ state
-# 144 "Lexer.fs"
+
+                        Lex.token EQ state lexbuf
+
           )
   | 4 -> ( 
-# 51 "Lexer.fsl"
-                        Lex.token COLON state
-# 149 "Lexer.fs"
+
+                        Lex.token COLON state lexbuf
+
           )
   | 5 -> ( 
-# 52 "Lexer.fsl"
-                        Lex.token SEMICOLON state
-# 154 "Lexer.fs"
+
+                        Lex.token SEMICOLON state lexbuf
+
           )
   | 6 -> ( 
-# 53 "Lexer.fsl"
-                        Lex.token COMMA state
-# 159 "Lexer.fs"
+
+                        Lex.token COMMA state lexbuf
+
           )
   | 7 -> ( 
-# 54 "Lexer.fsl"
-                        Lex.token ARROW state
-# 164 "Lexer.fs"
+
+                        Lex.token ARROW state lexbuf
+
           )
   | 8 -> ( 
-# 55 "Lexer.fsl"
-                        Lex.token DARROW state
-# 169 "Lexer.fs"
+
+                        Lex.token DARROW state lexbuf
+
           )
   | 9 -> ( 
-# 56 "Lexer.fsl"
-                         Lex.token DARROW state
-# 174 "Lexer.fs"
+
+                         Lex.token DARROW state lexbuf
+
           )
   | 10 -> ( 
-# 57 "Lexer.fsl"
-                         Lex.token ARROW state
-# 179 "Lexer.fs"
+
+                         Lex.token ARROW state lexbuf
+
           )
   | 11 -> ( 
-# 58 "Lexer.fsl"
-                        Lex.token LAMBDA state
-# 184 "Lexer.fs"
+
+                        Lex.token LAMBDA state lexbuf
+
           )
   | 12 -> ( 
-# 59 "Lexer.fsl"
-                        Lex.token DOT state
-# 189 "Lexer.fs"
+
+                        Lex.token DOT state lexbuf
+
           )
   | 13 -> ( 
-# 60 "Lexer.fsl"
-                        Lex.token STAR state
-# 194 "Lexer.fs"
+
+                        Lex.token STAR state lexbuf
+
           )
   | 14 -> ( 
-# 61 "Lexer.fsl"
-                        Lex.token STAR state
-# 199 "Lexer.fs"
+
+                        Lex.token STAR state lexbuf
+
           )
   | 15 -> ( 
-# 62 "Lexer.fsl"
-                        Lex.token RECT state
-# 204 "Lexer.fs"
+
+                        Lex.token RECT state lexbuf
+
           )
   | 16 -> ( 
-# 63 "Lexer.fsl"
-                        Lex.token BLOCKBEGIN state
-# 209 "Lexer.fs"
+
+                        Lex.token BLOCKBEGIN state lexbuf
+
           )
   | 17 -> ( 
-# 64 "Lexer.fsl"
-                        Lex.token BLOCKEND state
-# 214 "Lexer.fs"
+
+                        Lex.token BLOCKEND state lexbuf
+
           )
   | 18 -> ( 
-# 65 "Lexer.fsl"
+
                             
                    start {
                      state with
                        acceptIndent = true
-                       tokens = [WHERE]
+                       tokens = [WHERE, (lexbuf.StartPos, lexbuf.EndPos)]
                    } lexbuf
-# 224 "Lexer.fs"
+
           )
   | 19 -> ( 
-# 71 "Lexer.fsl"
+
                                
                    start state lexbuf
-# 230 "Lexer.fs"
+
           )
   | 20 -> ( 
-# 73 "Lexer.fsl"
+
                                          
                    newline lexbuf
                    let depth = (lexeme lexbuf).Length - 1
@@ -253,7 +253,7 @@ and tokenstream state lexbuf =
                          start 
                            {state with
                              indents = depth::state.indents
-                             tokens = [BLOCKBEGIN]
+                             tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
                            } 
                            lexbuf
                        else
@@ -262,14 +262,14 @@ and tokenstream state lexbuf =
                            {
                              state with  
                                indents = ls
-                               tokens = List.replicate i BLOCKEND
+                               tokens = List.replicate i (BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos))
                            } 
                            lexbuf 
                      | [] ->
                        start 
                          {state with
                            indents = [depth]
-                           tokens = [BLOCKBEGIN]
+                           tokens = [BLOCKBEGIN, (lexbuf.EndPos, lexbuf.EndPos)]
                          } 
                          lexbuf
                    else
@@ -279,31 +279,31 @@ and tokenstream state lexbuf =
                          indents = ls
                          tokens = 
                            [
-                             SEMICOLON
+                             SEMICOLON, (lexbuf.EndPos, lexbuf.EndPos)
                              for _ in 1..i do
-                               BLOCKEND
+                               BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
                            ]
                        } 
                        lexbuf 
-# 288 "Lexer.fs"
+
           )
   | 21 -> ( 
-# 127 "Lexer.fsl"
+
                           
                    match keywords.TryFind(lexeme lexbuf) with
-                                 | Some(token) -> Lex.token token state
-                                 | None -> Lex.token (IDENT(lexeme lexbuf)) state
+                                 | Some(token) -> Lex.token token state lexbuf
+                                 | None -> Lex.token (IDENT(lexeme lexbuf)) state lexbuf
                  
-# 297 "Lexer.fs"
+
           )
   | 22 -> ( 
-# 133 "Lexer.fsl"
+
                             
                      failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) 
-# 303 "Lexer.fs"
+
           )
   | 23 -> ( 
-# 135 "Lexer.fsl"
+
                             
                    start
                      {
@@ -311,13 +311,13 @@ and tokenstream state lexbuf =
                          eof = true
                          tokens = [
                            for _ in state.indents do
-                             BLOCKEND
-                           EOF
+                             BLOCKEND, (lexbuf.EndPos, lexbuf.EndPos)
+                           EOF, (lexbuf.EndPos, lexbuf.EndPos)
                          ]}
                      lexbuf
                  
-# 319 "Lexer.fs"
+
           )
   | _ -> failwith "tokenstream"
 
-# 3000000 "Lexer.fs"
+

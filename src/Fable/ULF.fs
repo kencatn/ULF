@@ -45,11 +45,10 @@ let update msg model =
     | ChangeCode str ->
         let lexbuf = LexBuffer.FromString str
         let tokens = 
+            let lexf = Parser.Program.lexfwithPos()
             Seq.unfold (fun buf -> 
                 try
-                    let r = Lexer.start buf
-                    let sp = buf.StartPos
-                    let ep = buf.EndPos
+                    let (r, (sp, ep)) = lexf buf
                     ((r, sp, ep), buf )|> Some
                 with
                 | _ -> None

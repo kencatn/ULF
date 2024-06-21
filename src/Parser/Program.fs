@@ -10,7 +10,7 @@ open ULF
 type A = Range
 
 
-let lexf () = 
+let lexfwithPos () = 
     let mutable state = {
         LexHelper.indents = []
         LexHelper.LexState.eof = false
@@ -23,6 +23,8 @@ let lexf () =
             state <- s
             token
         loop lexbuf
+
+let lexf () = lexfwithPos() >> fst
 
 let lexbufToSeq lexbuf =
     let lex = lexf ()
@@ -42,8 +44,9 @@ let lex text =
 
 let parse parser str =
     let lexbuf = LexBuffer<char>.FromString str
+    let lexf = lexf()
     try
-        parser Lexer.start lexbuf
+        parser lexf lexbuf
         |> Ok
     with
     | Parser.ParseError (err, s) -> Error (err, s)
