@@ -10,6 +10,7 @@ let newline (lexbuf: LexBuffer<_>) =
   lexbuf.EndPos <- lexbuf.StartPos.NextLine
 let lexeme = LexBuffer<_>.LexemeString
 open Parser.Parser
+open Parser.LexHelper
 let keywords =
     [
         "_", UNDER_BAR;
@@ -21,18 +22,8 @@ let keywords =
         "public", PUBLIC;
         "refl_", REFL;
     ] |> Map.ofList
-let mutable acceptIndent = false
-let mutable indents: int list = []
-let mutable curerntIndent = 0
-let mutable newlinesymbol = false
 
-let init () =
-      newlinesymbol <- false
-      curerntIndent <- 0
-      indents <- []
-      acceptIndent <- false
-
-# 35 "Lexer.fs"
+# 26 "Lexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -107,155 +98,139 @@ let trans : uint16[] array =
      [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;35us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
     (* State 35 *)
      [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;35us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 36 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;37us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 37 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;38us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
-    (* State 38 *)
-     [| 65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;38us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;8594us;65535us;8658us;65535us;955us;65535us;8727us;65535us;9633us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;65535us;|];
     |] 
-let actions : uint16[] = [|65535us;0us;1us;2us;3us;4us;5us;6us;7us;8us;21us;11us;13us;14us;15us;16us;17us;21us;19us;20us;20us;21us;22us;23us;21us;20us;20us;21us;21us;21us;18us;10us;9us;0us;65535us;0us;0us;65535us;0us;|]
+let actions : uint16[] = [|65535us;0us;1us;2us;3us;4us;5us;6us;7us;8us;21us;11us;13us;14us;15us;16us;17us;21us;19us;20us;20us;21us;22us;23us;21us;20us;20us;21us;21us;21us;18us;10us;9us;0us;65535us;0us;|]
 let _fslex_tables = FSharp.Text.Lexing.UnicodeTables.Create(trans,actions)
 let rec _fslex_dummy () = _fslex_dummy() 
 // Rule start
-and start  lexbuf =
-  match _fslex_tables.Interpret(36,lexbuf) with
-  | 0 -> ( 
-# 43 "Lexer.fsl"
-                            
-                     indentSemicolon lexbuf
-                   
-# 128 "Lexer.fs"
-          )
-  | _ -> failwith "start"
-// Rule indentSemicolon
-and indentSemicolon  lexbuf =
+and start (state: LexState) lexbuf =
   match _fslex_tables.Interpret(33,lexbuf) with
   | 0 -> ( 
-# 47 "Lexer.fsl"
+# 34 "Lexer.fsl"
                             
-                       if newlinesymbol then
-                         newlinesymbol <- false
-                         SEMICOLON
+                     match state.tokens with
+                     | [] -> 
+                       if state.eof then
+                         failwith "eof"
                        else
-                       match curerntIndent with
-                       | 0 -> 
-                         tokenstream lexbuf 
-                       | n ->
-                         curerntIndent <- curerntIndent - 1
-                         BLOCKEND
+                         tokenstream state lexbuf
+                     | x::xs ->
+                       x, {state with tokens = xs}
                    
-# 148 "Lexer.fs"
+# 120 "Lexer.fs"
           )
-  | _ -> failwith "indentSemicolon"
+  | _ -> failwith "start"
 // Rule tokenstream
-and tokenstream  lexbuf =
+and tokenstream state lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 61 "Lexer.fsl"
-                        Parser.DOT
-# 157 "Lexer.fs"
+# 46 "Lexer.fsl"
+                        Lex.token Parser.DOT state
+# 129 "Lexer.fs"
           )
   | 1 -> ( 
-# 63 "Lexer.fsl"
-                        LPAREN
-# 162 "Lexer.fs"
+# 48 "Lexer.fsl"
+                        Lex.token LPAREN state
+# 134 "Lexer.fs"
           )
   | 2 -> ( 
-# 64 "Lexer.fsl"
-                        RPAREN
-# 167 "Lexer.fs"
+# 49 "Lexer.fsl"
+                        Lex.token RPAREN state
+# 139 "Lexer.fs"
           )
   | 3 -> ( 
-# 65 "Lexer.fsl"
-                        EQ
-# 172 "Lexer.fs"
+# 50 "Lexer.fsl"
+                        Lex.token EQ state
+# 144 "Lexer.fs"
           )
   | 4 -> ( 
-# 66 "Lexer.fsl"
-                        COLON
-# 177 "Lexer.fs"
+# 51 "Lexer.fsl"
+                        Lex.token COLON state
+# 149 "Lexer.fs"
           )
   | 5 -> ( 
-# 67 "Lexer.fsl"
-                        SEMICOLON
-# 182 "Lexer.fs"
+# 52 "Lexer.fsl"
+                        Lex.token SEMICOLON state
+# 154 "Lexer.fs"
           )
   | 6 -> ( 
-# 68 "Lexer.fsl"
-                        COMMA
-# 187 "Lexer.fs"
+# 53 "Lexer.fsl"
+                        Lex.token COMMA state
+# 159 "Lexer.fs"
           )
   | 7 -> ( 
-# 69 "Lexer.fsl"
-                        ARROW
-# 192 "Lexer.fs"
+# 54 "Lexer.fsl"
+                        Lex.token ARROW state
+# 164 "Lexer.fs"
           )
   | 8 -> ( 
-# 70 "Lexer.fsl"
-                        DARROW
-# 197 "Lexer.fs"
+# 55 "Lexer.fsl"
+                        Lex.token DARROW state
+# 169 "Lexer.fs"
           )
   | 9 -> ( 
-# 71 "Lexer.fsl"
-                         DARROW
-# 202 "Lexer.fs"
+# 56 "Lexer.fsl"
+                         Lex.token DARROW state
+# 174 "Lexer.fs"
           )
   | 10 -> ( 
-# 72 "Lexer.fsl"
-                         ARROW
-# 207 "Lexer.fs"
+# 57 "Lexer.fsl"
+                         Lex.token ARROW state
+# 179 "Lexer.fs"
           )
   | 11 -> ( 
-# 73 "Lexer.fsl"
-                        LAMBDA
-# 212 "Lexer.fs"
+# 58 "Lexer.fsl"
+                        Lex.token LAMBDA state
+# 184 "Lexer.fs"
           )
   | 12 -> ( 
-# 74 "Lexer.fsl"
-                        DOT
-# 217 "Lexer.fs"
+# 59 "Lexer.fsl"
+                        Lex.token DOT state
+# 189 "Lexer.fs"
           )
   | 13 -> ( 
-# 75 "Lexer.fsl"
-                        STAR
-# 222 "Lexer.fs"
+# 60 "Lexer.fsl"
+                        Lex.token STAR state
+# 194 "Lexer.fs"
           )
   | 14 -> ( 
-# 76 "Lexer.fsl"
-                        STAR
-# 227 "Lexer.fs"
+# 61 "Lexer.fsl"
+                        Lex.token STAR state
+# 199 "Lexer.fs"
           )
   | 15 -> ( 
-# 77 "Lexer.fsl"
-                        RECT
-# 232 "Lexer.fs"
+# 62 "Lexer.fsl"
+                        Lex.token RECT state
+# 204 "Lexer.fs"
           )
   | 16 -> ( 
-# 78 "Lexer.fsl"
-                        BLOCKBEGIN
-# 237 "Lexer.fs"
+# 63 "Lexer.fsl"
+                        Lex.token BLOCKBEGIN state
+# 209 "Lexer.fs"
           )
   | 17 -> ( 
-# 79 "Lexer.fsl"
-                        BLOCKEND
-# 242 "Lexer.fs"
+# 64 "Lexer.fsl"
+                        Lex.token BLOCKEND state
+# 214 "Lexer.fs"
           )
   | 18 -> ( 
-# 80 "Lexer.fsl"
+# 65 "Lexer.fsl"
                             
-                   acceptIndent <- true
-                   WHERE
-# 249 "Lexer.fs"
+                   start {
+                     state with
+                       acceptIndent = true
+                       tokens = [WHERE]
+                   } lexbuf
+# 224 "Lexer.fs"
           )
   | 19 -> ( 
-# 83 "Lexer.fsl"
+# 71 "Lexer.fsl"
                                
-                   indentSemicolon lexbuf
-# 255 "Lexer.fs"
+                   start state lexbuf
+# 230 "Lexer.fs"
           )
   | 20 -> ( 
-# 85 "Lexer.fsl"
+# 73 "Lexer.fsl"
                                          
                    newline lexbuf
                    let depth = (lexeme lexbuf).Length - 1
@@ -267,53 +242,81 @@ and tokenstream  lexbuf =
                          loop (i+1) xs
                        else
                          i, indents
-                   if acceptIndent then
-                     acceptIndent <- false
-                     printfn "%O" (depth, indents, curerntIndent)
-                     match indents with
+                   if state.acceptIndent then
+                     let state = {
+                       state with
+                         acceptIndent = false
+                     }
+                     match state.indents with
                      | x::xs ->
                        if depth > x then
-                         indents <- depth :: indents
-                         BLOCKBEGIN
+                         start 
+                           {state with
+                             indents = depth::state.indents
+                             tokens = [BLOCKBEGIN]
+                           } 
+                           lexbuf
                        else
                          let (i, ls) = loop 1 xs
-                         indents <- ls
-                         curerntIndent <- i
-                         indentSemicolon lexbuf
+                         start 
+                           {
+                             state with  
+                               indents = ls
+                               tokens = List.replicate i BLOCKEND
+                           } 
+                           lexbuf 
                      | [] ->
-                       printfn "a"
-                       indents <- [depth]
-                       BLOCKBEGIN
+                       start 
+                         {state with
+                           indents = [depth]
+                           tokens = [BLOCKBEGIN]
+                         } 
+                         lexbuf
                    else
-                     newlinesymbol <- true
-                     let (i, ls) = loop 0 indents
-                     indents <- ls
-                     curerntIndent <- i
-                     indentSemicolon lexbuf
-# 293 "Lexer.fs"
+                     let (i, ls) = loop 0 state.indents
+                     start 
+                       {state with
+                         indents = ls
+                         tokens = 
+                           [
+                             SEMICOLON
+                             for _ in 1..i do
+                               BLOCKEND
+                           ]
+                       } 
+                       lexbuf 
+# 288 "Lexer.fs"
           )
   | 21 -> ( 
-# 119 "Lexer.fsl"
+# 127 "Lexer.fsl"
                           
                    match keywords.TryFind(lexeme lexbuf) with
-                                 | Some(token) -> token
-                                 | None -> IDENT(lexeme lexbuf)
+                                 | Some(token) -> Lex.token token state
+                                 | None -> Lex.token (IDENT(lexeme lexbuf)) state
                  
-# 302 "Lexer.fs"
+# 297 "Lexer.fs"
           )
   | 22 -> ( 
-# 125 "Lexer.fsl"
+# 133 "Lexer.fsl"
                             
-                     init ()
                      failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) 
-# 309 "Lexer.fs"
+# 303 "Lexer.fs"
           )
   | 23 -> ( 
-# 128 "Lexer.fsl"
+# 135 "Lexer.fsl"
                             
-                     init ()
-                     Parser.EOF 
-# 316 "Lexer.fs"
+                   start
+                     {
+                       state with
+                         eof = true
+                         tokens = [
+                           for _ in state.indents do
+                             BLOCKEND
+                           EOF
+                         ]}
+                     lexbuf
+                 
+# 319 "Lexer.fs"
           )
   | _ -> failwith "tokenstream"
 

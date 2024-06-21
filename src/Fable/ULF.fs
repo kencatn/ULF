@@ -133,7 +133,16 @@ let view model dispatch =
                 cn <- n
                 let sp = sp.pos_cnum + n
                 let ep = ep.pos_cnum + n
-                if sp > p then yield Html.span (model.code.[p..sp-1])
+                match token with
+                | Parser.token.IDENT str -> printfn "(%O)" (str, sp, ep, n)
+                | _ -> ()
+                if sp > p then 
+                    yield 
+                        Html.span [
+                            prop.classes [sprintf "%O" (token, sp, ep)]
+                            prop.children [
+                                Html.span (model.code.[p..sp-1])]]
+
                 yield 
                     Html.span [
                         prop.classes [

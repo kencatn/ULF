@@ -7,6 +7,7 @@ let newline (lexbuf: LexBuffer<_>) =
   lexbuf.EndPos <- lexbuf.StartPos.NextLine
 let lexeme = LexBuffer<_>.LexemeString
 open Parser.Parser
+open Parser.LexHelper
 let keywords =
     [
         "_", UNDER_BAR;
@@ -18,16 +19,6 @@ let keywords =
         "public", PUBLIC;
         "refl_", REFL;
     ] |> Map.ofList
-let mutable acceptIndent = false
-let mutable indents: int list = []
-let mutable curerntIndent = 0
-let mutable newlinesymbol = false
-
-let init () =
-      newlinesymbol <- false
-      curerntIndent <- 0
-      indents <- []
-      acceptIndent <- false
 }
 // Regular expressions
 let whitespace = [' ']
@@ -39,49 +30,46 @@ let ident = identHead | (identHead identChar* identTail)
 let indent = whiltespace whitespace
 let never = 'a'+'a'
 let anyZero = never?
-rule start = parse
+rule start (state : LexState) = parse
   | anyZero {
-      indentSemicolon lexbuf
-    }
-and indentSemicolon = parse
-  | anyZero {
-        if newlinesymbol then
-          newlinesymbol <- false
-          SEMICOLON
+      match state.tokens with
+      | [] -> 
+        if state.eof then
+          failwith "eof"
         else
-        match curerntIndent with
-        | 0 -> 
-          tokenstream lexbuf 
-        | n ->
-          curerntIndent <- curerntIndent - 1
-          BLOCKEND
+          tokenstream state lexbuf
+      | x::xs ->
+        x, {state with tokens = xs}
     }
-and tokenstream = parse
+and tokenstream state = parse
   // --------------------------
-  | "." {Parser.DOT}
+  | "." {Lex.token Parser.DOT state}
   // --------------------------
-  | "(" {LPAREN}
-  | ")" {RPAREN}
-  | "=" {EQ}
-  | ":" {COLON}
-  | ";" {SEMICOLON}
-  | "," {COMMA}
-  | "→" {ARROW}
-  | "⇒" {DARROW}
-  | "=>" {DARROW}
-  | "->" {ARROW}
-  | "λ" {LAMBDA}
-  | "." {DOT}
-  | "*" {STAR}
-  | "∗" {STAR}
-  | "□" {RECT}
-  | "{" {BLOCKBEGIN}
-  | "}" {BLOCKEND}
+  | "(" {Lex.token LPAREN state}
+  | ")" {Lex.token RPAREN state}
+  | "=" {Lex.token EQ state}
+  | ":" {Lex.token COLON state}
+  | ";" {Lex.token SEMICOLON state}
+  | "," {Lex.token COMMA state}
+  | "→" {Lex.token ARROW state}
+  | "⇒" {Lex.token DARROW state}
+  | "=>" {Lex.token DARROW state}
+  | "->" {Lex.token ARROW state}
+  | "λ" {Lex.token LAMBDA state}
+  | "." {Lex.token DOT state}
+  | "*" {Lex.token STAR state}
+  | "∗" {Lex.token STAR state}
+  | "□" {Lex.token RECT state}
+  | "{" {Lex.token BLOCKBEGIN state}
+  | "}" {Lex.token BLOCKEND state}
   | "where" {
-    acceptIndent <- true
-    WHERE}
+    start {
+      state with
+        acceptIndent = true
+        tokens = [WHERE]
+    } lexbuf}
   | whitespace	{
-    indentSemicolon lexbuf}
+    start state lexbuf} 
   | newline	whitespace* { 
     newline lexbuf
     let depth = (lexeme lexbuf).Length - 1
@@ -93,38 +81,66 @@ and tokenstream = parse
           loop (i+1) xs
         else
           i, indents
-    if acceptIndent then
-      acceptIndent <- false
-      printfn "%O" (depth, indents, curerntIndent)
-      match indents with
+    if state.acceptIndent then
+      let state = {
+        state with
+          acceptIndent = false
+      }
+      match state.indents with
       | x::xs ->
         if depth > x then
-          indents <- depth :: indents
-          BLOCKBEGIN
+          start 
+            {state with
+              indents = depth::state.indents
+              tokens = [BLOCKBEGIN]
+            } 
+            lexbuf
         else
           let (i, ls) = loop 1 xs
-          indents <- ls
-          curerntIndent <- i
-          indentSemicolon lexbuf
+          start 
+            {
+              state with  
+                indents = ls
+                tokens = List.replicate i BLOCKEND
+            } 
+            lexbuf 
       | [] ->
-        printfn "a"
-        indents <- [depth]
-        BLOCKBEGIN
+        start 
+          {state with
+            indents = [depth]
+            tokens = [BLOCKBEGIN]
+          } 
+          lexbuf
     else
-      newlinesymbol <- true
-      let (i, ls) = loop 0 indents
-      indents <- ls
-      curerntIndent <- i
-      indentSemicolon lexbuf}
+      let (i, ls) = loop 0 state.indents
+      start 
+        {state with
+          indents = ls
+          tokens = 
+            [
+              SEMICOLON
+              for _ in 1..i do
+                BLOCKEND
+            ]
+        } 
+        lexbuf }
   | ident {
     match keywords.TryFind(lexeme lexbuf) with
-                  | Some(token) -> token
-                  | None -> IDENT(lexeme lexbuf)
+                  | Some(token) -> Lex.token token state
+                  | None -> Lex.token (IDENT(lexeme lexbuf)) state
   }
   // --------------------------
   | _    		{ 
-      init ()
       failwith ("ParseError" + LexBuffer<_>.LexemeString lexbuf) }
   | eof   	{ 
-      init ()
-      Parser.EOF }
+    start
+      {
+        state with
+          eof = true
+          tokens = [
+            for _ in state.indents do
+              BLOCKEND
+            EOF
+          ]}
+      lexbuf
+  }
