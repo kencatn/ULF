@@ -1,0 +1,4 @@
+bug:
+    "apply" と "->" の優先順位
+todo: 
+    module機能の実装
