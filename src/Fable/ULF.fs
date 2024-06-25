@@ -14,7 +14,7 @@ open Common.Utils.ReduUndo
 
 type Expr =
     | Module of Module
-    | Signature of PreSignature
+    | Signature of PreSignatureElement
     | Open of Open
 and Open = 
     {
@@ -22,10 +22,10 @@ and Open =
     }
 and Module =
     {
+        shortIdent: LongIdent
         context: PreContext
         exprs: Expr list
     }
-
 
 type Parsed = {
     tokens: (Parser.token * Position * Position) seq

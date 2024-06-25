@@ -157,7 +157,7 @@ type _SynPreTerm =
         | Pi (A, a, B) ->
             match a with
             | None -> sprintf "%O -> (%O)" (A.display) (B.display)
-            | Some a -> sprintf "(%O : %O) -> (%O)" (A.display) (a.display) (B.display)
+            | Some a -> sprintf "(%O : %O) -> (%O)" (a.display) (A.display) (B.display)
         | Abs (A, a, B) ->
             match A with
             | None -> sprintf "λ %O -> %O" (a.display) (B.display)

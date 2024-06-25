@@ -21,9 +21,10 @@ type PreContext =
     {
         preContext: (VariableName * PreTerm) list
     }
+type PreSignatureElement = (SymbolName * PreContext * PreTerm)
 type PreSignature = 
     {
-        symbols: (SymbolName * PreContext * PreTerm) list
+        symbols: PreSignatureElement list
     }
 
 
@@ -591,8 +592,8 @@ let checkTypeMemo j =
         res
     | Some a ->
         a
-let checkTypeAll j =
-    let mutable memo = Map.empty
+let checkTypeAllWithMemo memo j = 
+    let mutable memo = memo
     let rec checkTypeAll j  =
         let rec cn c =
             match c with
@@ -649,7 +650,6 @@ let checkTypeAll j =
             match a with
             | Ok(Branch ((j, a), ls)) -> Ok (Branch ((j, Some $"memo: {a}"), []))
             | Error (Branch ((j, a), ls)) -> Error (Branch((j, Some $"memo: {a}"), []))
+    checkTypeAll j, memo
 
-
-
-    checkTypeAll j 
+let checkTypeAll j = checkTypeAllWithMemo Map.empty j |> fst
