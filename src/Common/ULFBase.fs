@@ -1,4 +1,4 @@
-module Parser.ULF
+module ULFBase
 open Common
 type Ident = string
 type LongIdent = Ident list

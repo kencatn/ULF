@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ULF.fs" />
     <Compile Include="Syntax.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module Parser.Parser</OtherFlags>

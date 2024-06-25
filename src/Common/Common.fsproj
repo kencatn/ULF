@@ -6,5 +6,6 @@
   <ItemGroup>
     <Compile Include="Vector.fs"/>
     <Compile Include="Utils.fs"/>
+    <Compile Include="ULFBase.fs"/>
   </ItemGroup>
 </Project>

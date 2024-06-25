@@ -3,7 +3,7 @@ module rec Parser.Syntax
 open FSharp.Text.Lexing
 open FSharp.Text.Parsing
 // open FSharp.Text.Parsing.ParseHelpers
-open Parser.ULF
+open ULFBase
 
 type Env =
     {
@@ -177,37 +177,37 @@ type _SynPreTerm =
     member x.ulf =    
         read {
             match x with
-            | Star -> return ULF.Star
-            | Rect -> return ULF.Rect
+            | Star -> return ULFBase.Star
+            | Rect -> return ULFBase.Rect
             | Symbol (synId, pts) -> 
-                return! fun env -> ULF.Symbol (synId.ulf |> ULF.SymbolName, pts |> List.map (fun a -> a.ulf env))
+                return! fun env -> ULFBase.Symbol (synId.ulf |> ULFBase.SymbolName, pts |> List.map (fun a -> a.ulf env))
             | SymbolOrApp (synId, pts) -> 
                 let synId = synId.ulf
-                let symName = ULF.SymbolName synId
+                let symName = ULFBase.SymbolName synId
                 let! a = Env.tryGetSymbol symName
                 match a with
                 | None -> 
-                    return! fun env -> ULF.App (None, None, None, (ULF.Variable (ULF.VariableName synId)), pts.ulf env)
+                    return! fun env -> ULFBase.App (None, None, None, (ULFBase.Variable (ULFBase.VariableName synId)), pts.ulf env)
                 | Some x ->
-                    return! fun env -> ULF.Symbol (symName, [pts.ulf env])
+                    return! fun env -> ULFBase.Symbol (symName, [pts.ulf env])
             | SymbolOrVariable (synId) ->
                 let synId = synId.ulf
-                let synName = ULF.SymbolName synId
+                let synName = ULFBase.SymbolName synId
                 let! a = Env.tryGetSymbol synName
                 match a with
                 | None ->
-                    return! fun env -> ULF.Variable (ULF.VariableName synId)
+                    return! fun env -> ULFBase.Variable (ULFBase.VariableName synId)
                 | Some a ->
-                    return! fun env -> ULF.Symbol (synName, [])
+                    return! fun env -> ULFBase.Symbol (synName, [])
 
-            | Variable (vident) -> return ULF.Variable vident.ulf
+            | Variable (vident) -> return ULFBase.Variable vident.ulf
             | Pi (A, x, B) -> 
-                return! fun env -> ULF.Pi (A.ulf env, x |> Option.map (_.ulf >> ULF.VariableName), B.ulf env)
-            | Abs (A, x, B) -> return! fun env -> ULF.Abs (A |> Option.map (fun a -> a.ulf env), x.ulf, B.ulf env)
+                return! fun env -> ULFBase.Pi (A.ulf env, x |> Option.map (_.ulf >> ULFBase.VariableName), B.ulf env)
+            | Abs (A, x, B) -> return! fun env -> ULFBase.Abs (A |> Option.map (fun a -> a.ulf env), x.ulf, B.ulf env)
             | App (A, x, B, a, b) ->
-                return! fun env -> ULF.App (A |> Option.map (fun a -> a.ulf env), x |> Option.map _.ulf, B |> Option.map (fun a -> a.ulf env), a.ulf env, b.ulf env)
-            | Eq (A, a, b) -> return! fun env -> ULF.Eq (A |> Option.map (fun a -> a.ulf env), a.ulf env, b.ulf env)
-            | Refl A -> return! fun env -> ULF.Refl (A.ulf env)
+                return! fun env -> ULFBase.App (A |> Option.map (fun a -> a.ulf env), x |> Option.map _.ulf, B |> Option.map (fun a -> a.ulf env), a.ulf env, b.ulf env)
+            | Eq (A, a, b) -> return! fun env -> ULFBase.Eq (A |> Option.map (fun a -> a.ulf env), a.ulf env, b.ulf env)
+            | Refl A -> return! fun env -> ULFBase.Refl (A.ulf env)
         }
 type SynPreTerm = 
     {

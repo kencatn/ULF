@@ -3,7 +3,7 @@ open Parser
 open FSharp.Text.Lexing
 open Common.Utils
 open NonEmptyTree
-open Parser.ULF
+open ULFBase
 open Elmish
 
 open Common.Utils.ReduUndo
@@ -11,6 +11,21 @@ open Common.Utils.ReduUndo
 #if DEBUG
     open Elmish.HMR
 #endif
+
+type Expr =
+    | Module of Module
+    | Signature of PreSignature
+    | Open of Open
+and Open = 
+    {
+        target: LongIdent
+    }
+and Module =
+    {
+        context: PreContext
+        exprs: Expr list
+    }
+
 
 type Parsed = {
     tokens: (Parser.token * Position * Position) seq
@@ -61,7 +76,7 @@ let update msg model =
                 let typeCheckResult =
                     a.syntax.ulf (Syntax.Env.empty)
                     |> Sig
-                    |> (ULF.checkTypeAll)
+                    |> (ULFBase.checkTypeAll)
                 let t =
                     match typeCheckResult with
                     | Ok j -> j |> RedoUndo.ofNonEmptyTree |> Ok

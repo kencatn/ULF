@@ -5,7 +5,7 @@ open FSharp.Text.Lexing
 
 
 open Syntax
-open ULF
+open ULFBase
 
 type A = Range
 
