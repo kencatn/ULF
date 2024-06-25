@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="../Parser/Lexing.fs" />
     <Compile Include="../Parser/Parsing.fs" />
-    <Compile Include="Syntax.fs" />
+    <Compile Include="../Parser/Syntax.fs" />
     <Compile Include="../Parser/Parser.fs" />
     <Compile Include="../Parser/LexHelper.fs" />
     <Compile Include="../Parser/Lexer.fs" />
