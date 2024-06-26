@@ -118,6 +118,24 @@ with
 | _ -> ()    
 
 
+let pi = """module pidtt.foundation where
+    Type : => □
+    el : (A : Type) => *
+    Pi : (A : Type) (B : (el A) → Type) ⇒ Type
+    abs : (A : Type) (B : (el A) → Type) (b : (x : el A) → el (B x)) ⇒ el (Pi(A, B))
+    app : (A : Type) (B : (el A) → Type) (p : el (Pi(A, B))) (a : el A) ⇒ el (B a)
+    (A : Type) (B : (el A) → Type) (b : (x : el A) → el (B x)) (a : el A) ⇒ app(A, B, abs(A, B, b), a) = b a
+    (A : Type) (B : (el A) → Type) (p : el (Pi(A, B))) ⇒ abs(A, B, λ (x : el A) → app(A, B, p, x)) = p
+"""
+
+parse Parser.start pi
+|> function 
+| Ok a -> 
+    printfn "ok!!"
+    
+| Error (err, s) -> 
+    printErrors err pi s
+
 // let syntax = """Type : ⇒ □; el : (A : Type) ⇒ *;"""
 // lex syntax |> Seq.iter (printf "%O; ")
 // printfn ""

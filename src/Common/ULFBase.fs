@@ -143,6 +143,40 @@ let judgementToString judgement =
         let A = termToString A
         $"{sigma}|{gamma}⊢{a}≡{b}:{A}"
 
+let signatureToString' (signature) =
+    signature.symbols
+    |> Seq.rev
+    |> Seq.map (fun (a, b, c) -> symbolNameToString a)
+    |> String.concat ", "
+    |> fun a -> $"({a})"
+
+let judgementToString' judgement =
+    match judgement with
+    | Sig sigma -> 
+        let sigma = signatureToString' sigma
+        $"{sigma}⊢sig"
+    | Ctx (sigma, gamma) -> 
+        let sigma = signatureToString' sigma
+        let gamma = contextToString gamma
+        $"...|{gamma}⊢ctx"
+    | Term (sigma, gamma, a, A) -> 
+        let sigma = signatureToString' sigma
+        let gamma = contextToString gamma
+        let a = termToString a
+        match A with
+        | Some A ->
+            let A = termToString A
+            $"...|{gamma}⊢{a}:{A}"
+        | None ->
+            $"...|{gamma}⊢{a}"
+    | JEq (sigma, gamma, a, b, A) -> 
+        let sigma = signatureToString' sigma
+        let gamma = contextToString gamma
+        let a = termToString a
+        let b = termToString b
+        let A = termToString A
+        $"...|{gamma}⊢{a}≡{b}:{A}"
+
 let splitLast ls = 
     let rec loop ls cnt =
         match ls with
@@ -268,7 +302,7 @@ module Continue =
     let singleContinue str judge = Label (str, Single judge)
 let rec inferenceType (sigma, gamma, term) =
 
-    let c =
+    let (pt, l) =
             match term with
             | Variable (x) ->
                 gamma |> PreContext.tryFindVariable x
@@ -357,7 +391,7 @@ let rec inferenceType (sigma, gamma, term) =
             | Eq(_) -> Some Rect, "eq"
             | Refl(a) ->
                 Some (Eq(None, a, a)), "refl"
-    c    
+    pt, ("type inference:" + l)
 let checkType judge =
     match judge with
     | Sig (sigma) ->
@@ -391,7 +425,7 @@ let checkType judge =
             Or [
                 let c =
                     match term1 with
-                    | None -> False
+                    | None -> Continue.label "type inference needed" False
                     | Some term1 ->
                     match term1 with
                     | Rect -> 
@@ -436,8 +470,13 @@ let checkType judge =
                             And [
                                 Term (sigma, gamma, A, Some Star) |> Single
                                 Term (sigma, PreContext.cons (x', A) gamma, b, Some B) |> Single
-                            ]
-                        | _ -> Or []
+                            ] |> Continue.label "12: "
+                        | Abs (None, x', b) when x = Some x'->
+                            And [
+                                Term (sigma, gamma, A, Some Star) |> Single
+                                Term (sigma, PreContext.cons (x', A) gamma, b, Some B) |> Single
+                            ] |> Continue.label "12: "
+                        | _ -> Or [] |> Continue.label "12: empty"
                     | App (A, x, B, b, a) -> failwithf "not inmplemented term app"
                     | Eq (Some A, a, a') when a = a' ->
                         match term0 with
@@ -533,7 +572,7 @@ let checkType judge =
                             | None ->
                                 inferenceType (sigma, gamma, b) |> fst
                         match B_ with
-                        | None -> None, $"type inference failed {b}"
+                        | None -> None, $"13: type inference failed {b}"
                         | Some B ->
                         match B with
                         | Pi(A',x',B') ->
@@ -547,8 +586,8 @@ let checkType judge =
                                     else
                                         None, $"13: type not match {B''} {term1}"
                             else
-                                None, $"type not match {A} {A'}"
-                        | _ -> None, $"{B} must be Pi"
+                                None, $"13: type not match {A} {A'}"
+                        | _ -> None, $"13: {B} must be Pi"
                     match r with
                     | None -> False |> Continue.label $"13: {m}"
                     | Some (x, A, B, B', Ba) ->

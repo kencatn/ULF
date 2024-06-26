@@ -23,6 +23,16 @@ let str2 = """module pidtt.foundation where{
     (p : el Π) ⇒ abs(λ (a : el A) → app(p, a)) = p
 }}"""
 
+let pi = """module pidtt.foundation where
+    Type : => □
+    el : (A : Type) => *
+    Pi : (A : Type) (B : el A → Type) ⇒ Type
+    abs : (A : Type) (B : el A → Type) (b : (x : el A) → el (B x)) ⇒ el (Pi(A, B))
+    app : (A : Type) (B : el A → Type) (p : el (Pi(A, B))) (a : el A) ⇒ el (B a)
+    (A : Type) (B : el A → Type) (b : (x : el A) → el (B x)) (a : el A) ⇒ app(A, B, abs(A, B, b), a) = b a
+    (A : Type) (B : el A → Type) (p : el Pi(A, B)) ⇒ abs(A, B, λ (a : el A) → app(A, B, p, a)) = p
+"""
+
 let prmdtt_foundation =
     """module primdtt.foundation where {
         Type : ⇒ □;

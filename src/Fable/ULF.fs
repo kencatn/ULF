@@ -177,7 +177,7 @@ let view model dispatch =
                     Html.pre (
                         t.current 
                         |> fun (x, y) -> 
-                            let j = judgementToString x
+                            let j = judgementToString' x
                             sprintf "%O: %O" y j)
                     for x in t |> RedoUndo.allRedo do
                         Html.li [
