@@ -605,7 +605,15 @@ let checkType judge =
                     |> function
                     | None -> False |> Continue.label "type inference failed"
                     | Some x -> Single (Term (sigma, gamma, term0, Some x))
-                | _ -> False |> Continue.label "not implement dayo"]
+                | Some B -> 
+                    inferenceType (sigma, gamma, term0) |> fst
+                    |> function
+                    | None -> False |> Continue.label "type inference failed"
+                    | Some A ->
+                        And [
+                            Single (JEq (sigma, gamma, A, B, Rect))
+                        ] |> Continue.label "7:"
+            ]
         c
     | JEq (sigma, gamma, termL, termR, term) ->
         Or [
@@ -613,8 +621,39 @@ let checkType judge =
             | Eq (A, a, a') when a = a' ->
                 match termL, termR with
                 | (b, Refl a') when a = a' ->
-                    Continue.label "19" <| Single (Term (sigma, gamma, b, Some <| Eq(A, a, a)))
-                | _ -> False
+                    yield Continue.label "19" <| Single (Term (sigma, gamma, b, Some <| Eq(A, a, a)))
+                | _ -> 
+                    yield False |> Continue.label "not implemented"                         
+            | Rect ->
+                yield Or [
+                    match termL with
+                    | App (A, x, B, Abs (A', x', b), a) when x = Some x' ->
+                        printfn "j: %O" (judge |> judgementToString' )
+                        let A =
+                            match A, A' with
+                            | Some A, Some A' ->
+                                if A = A' then
+                                    Some A
+                                else None
+                            | Some A, None | None, Some A ->
+                                Some A
+                            | _, _ -> inferenceType (sigma, gamma, a) |> fst
+                        match A with
+                        | Some A -> 
+                            And [
+                                Single (Term (sigma, gamma, A, Some Star))
+                                let gamma' =
+                                    match x with
+                                    | None -> gamma
+                                    | Some x -> gamma |> PreContext.cons (x, A)
+                                Single (Term (sigma, gamma', b, B))
+                                Single (Term (sigma, gamma, a, Some A))
+                            ] |> Continue.label "13:"
+                        | None -> ()
+                    | _ -> False |> Continue.label "eq rect: not implemented"
+                ] 
+            | _ -> yield False |> Continue.label "eq otherwise: not implemented"
+            // yield Single (Eq (sigma, gamma, ))
         ] |> fun a -> a
 type R =
     | SingleR of Judgment

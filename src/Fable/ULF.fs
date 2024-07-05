@@ -131,9 +131,13 @@ let view model dispatch =
         Html.textarea [
             prop.defaultValue model.code
             prop.onChange (ChangeCode>>dispatch)
+            prop.style [
+                style.width 1600
+                style.height 200
+            ]
         ]
         Html.p []
-        Html.text (sprintf "%O" (model.tokens |> Seq.map (fun (a, _, _) -> a |> string) |> String.concat "; "))
+        // Html.text (sprintf "%O" (model.tokens |> Seq.map (fun (a, _, _) -> a |> string) |> String.concat "; "))
         match model.parseResult with
         | None ->
             Html.p []   

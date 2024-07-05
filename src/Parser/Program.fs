@@ -125,7 +125,7 @@ let pi = """module pidtt.foundation where
     abs : (A : Type) (B : (el A) → Type) (b : (x : el A) → el (B x)) ⇒ el (Pi(A, B))
     app : (A : Type) (B : (el A) → Type) (p : el (Pi(A, B))) (a : el A) ⇒ el (B a)
     (A : Type) (B : (el A) → Type) (b : (x : el A) → el (B x)) (a : el A) ⇒ app(A, B, abs(A, B, b), a) = b a
-    (A : Type) (B : (el A) → Type) (p : el (Pi(A, B))) ⇒ abs(A, B, λ (x : el A) → app(A, B, p, x)) = p
+    (A : Type) (B : (el A) → Type) (p : el (Pi(A, B))) ⇒ abs(A, B, λ (a : el A) → app(A, B, p, a)) = p
 """
 
 parse Parser.start pi

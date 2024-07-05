@@ -1,4 +1,6 @@
 bug:
     "apply" と "->" の優先順位
+    unicodeが使えない
+    空行の処理
 todo: 
     module機能の実装
